@@ -17,9 +17,10 @@ defmodule Lv.Application do
       # Start Finch
       {Finch, name: Lv.Finch},
       # Start the Endpoint (http/https)
-      LvWeb.Endpoint
+      LvWeb.Endpoint,
       # Start a worker by calling: Lv.Worker.start_link(arg)
       # {Lv.Worker, arg}
+      {Lv.TicTacToe.ComputerMoveServer, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

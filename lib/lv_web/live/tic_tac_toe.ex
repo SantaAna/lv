@@ -1,0 +1,80 @@
+defmodule LvWeb.TicTacToe do
+  use LvWeb, :live_view
+  alias Lv.TicTacToe.{Board, Game, ComputerPlayer, ComputerMoveServer}
+
+  def mount(_params, _session, socket) do
+    {:ok, assign(socket, board: Board.new(), winner: nil, draw: nil)}
+  end
+
+  def render(assigns) do
+    ~H"""
+    <h1>Tic-Tac-Toe</h1>
+    <h2 :if={@winner == :computer} class="text-red-500 text-2xl">Comptuer Wins!</h2>
+    <h2 :if={@winner == :player} class="text-green-500 text-2xl">You Win!</h2>
+    <h2 :if={@draw} class="text-yellow-500 text-2xl">Cat's Game!</h2>
+    <.board board={@board} />
+    <button class="bg-black text-zinc-50 p-4 mt-5" phx-click="play-again" :if={@draw || @winner}>Play Again</button>
+    """
+  end
+
+  def board(assigns) do
+    ~H"""
+    <div class="grid grid-cols-3 h-52 w-52">
+      <%= for x <- 1..3, y <- 1..3 do %>
+        <.board_square coord={[x, y]} board={@board} />
+      <% end %>
+    </div>
+    """
+  end
+
+  def board_square(assigns) do
+    ~H"""
+    <%= case @board[@coord] do %>
+      <% :blank  -> %>
+        <div
+          class="p-5 text-xl border-black border-2 text-center h-full w-full"
+          phx-click="mark"
+          phx-value-row={Enum.at(@coord, 0)}
+          phx-value-col={Enum.at(@coord, 1)}
+        >
+        </div>
+      <% :x -> %>
+        <div class="p-5 text-xl border-black border-2 text-center h-full w-full">X</div>
+      <% :o -> %>
+        <div class="p-5 text-xl border-black border-2 text-center h-full w-full">O</div>
+    <% end %>
+    """
+  end
+
+  def handle_event("play-again", _params, socket) do
+    {:noreply, assign(socket, winner: nil, draw: nil, board: Board.new())}
+  end
+
+  def handle_event("mark", %{"row" => row, "col" => col}, socket) do
+    coords = [row, col] |> Enum.map(&String.to_integer/1)
+    {:ok, new_board} = Board.mark(socket.assigns.board, coords, :x)
+
+    cond do
+      Game.draw_check(new_board) ->
+        {:noreply, assign(socket, board: new_board, draw: true)}
+
+      Game.winner(new_board) == {true, :x} ->
+        {:noreply, assign(socket, board: new_board, winner: :player)}
+
+      true ->
+        computer_move = ComputerMoveServer.get_move(new_board)
+        {:ok, new_board} = Board.mark(new_board, computer_move, :o)
+
+        case [Game.winner(new_board), Game.draw_check(new_board)] do
+          [{true, :o}, _] ->
+            {:noreply, assign(socket, board: new_board, winner: :computer)}
+
+          [_, true] ->
+            {:noreply, assign(socket, board: new_board, draw: true)}
+
+          _ ->
+            {:noreply, assign(socket, board: new_board)}
+        end
+    end
+  end
+end

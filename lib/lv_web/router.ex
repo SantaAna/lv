@@ -19,6 +19,8 @@ defmodule LvWeb.Router do
 
     get "/", PageController, :home
     live "/guess", WrongLive
+    live "/rps", RockPaperScissors
+    live "/ttt", TicTacToe
   end
 
   # Other scopes may use custom stacks.
