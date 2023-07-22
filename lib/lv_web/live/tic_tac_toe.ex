@@ -14,6 +14,22 @@ defmodule LvWeb.TicTacToe do
     <h2 :if={@draw} class="text-yellow-500 text-2xl">Cat's Game!</h2>
     <.board board={@board} />
     <button class="bg-black text-zinc-50 p-4 mt-5" phx-click="play-again" :if={@draw || @winner}>Play Again</button>
+    <div class="flex justify-center">
+      <div>
+        <h1 class="text-center text-2xl mb-5">Tic-Tac-Toe</h1>
+        <h2 :if={@winner == :computer} class="text-red-500 text-2xl text-center mb-2">
+          Comptuer Wins!
+        </h2>
+        <h2 :if={@winner == :player} class="text-green-500 text-2xl text-center mb-2">You Win!</h2>
+        <h2 :if={@draw} class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
+        <.board board={@board} done={@draw || @winner} />
+        <div class="flex justify-center">
+          <button :if={@draw || @winner} class="bg-black text-zinc-50 p-4 mt-5 hover:bg-gray-700" phx-click="play-again">
+            Play Again
+          </button>
+        </div>
+      </div>
+    </div>
     """
   end
 
