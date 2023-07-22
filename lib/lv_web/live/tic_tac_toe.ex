@@ -8,12 +8,6 @@ defmodule LvWeb.TicTacToe do
 
   def render(assigns) do
     ~H"""
-    <h1>Tic-Tac-Toe</h1>
-    <h2 :if={@winner == :computer} class="text-red-500 text-2xl">Comptuer Wins!</h2>
-    <h2 :if={@winner == :player} class="text-green-500 text-2xl">You Win!</h2>
-    <h2 :if={@draw} class="text-yellow-500 text-2xl">Cat's Game!</h2>
-    <.board board={@board} />
-    <button class="bg-black text-zinc-50 p-4 mt-5" phx-click="play-again" :if={@draw || @winner}>Play Again</button>
     <div class="flex justify-center">
       <div>
         <h1 class="text-center text-2xl mb-5">Tic-Tac-Toe</h1>
@@ -37,7 +31,7 @@ defmodule LvWeb.TicTacToe do
     ~H"""
     <div class="grid grid-cols-3 h-52 w-52">
       <%= for x <- 1..3, y <- 1..3 do %>
-        <.board_square coord={[x, y]} board={@board} />
+        <.board_square coord={[x, y]} board={@board} done={@done} />
       <% end %>
     </div>
     """
@@ -47,17 +41,28 @@ defmodule LvWeb.TicTacToe do
     ~H"""
     <%= case @board[@coord] do %>
       <% :blank  -> %>
-        <div
-          class="p-5 text-xl border-black border-2 text-center h-full w-full"
-          phx-click="mark"
-          phx-value-row={Enum.at(@coord, 0)}
-          phx-value-col={Enum.at(@coord, 1)}
-        >
-        </div>
+        <%= if @done do %>
+          <div class="p-5 text-xl border-black border-2 text-center h-full w-full text-transparent hover:bg-red-100">
+          B
+          </div>
+        <% else %>
+          <div
+            class="p-5 text-xl border-black border-2 text-center h-full w-full text-transparent hover:bg-green-100"
+            phx-click="mark"
+            phx-value-row={Enum.at(@coord, 0)}
+            phx-value-col={Enum.at(@coord, 1)}
+          >
+          B
+          </div>
+        <% end %>
       <% :x -> %>
-        <div class="p-5 text-xl border-black border-2 text-center h-full w-full">X</div>
+        <div class="p-5 text-xl border-black border-2 text-center h-full w-full hover:bg-red-100">
+          X
+        </div>
       <% :o -> %>
-        <div class="p-5 text-xl border-black border-2 text-center h-full w-full">O</div>
+        <div class="p-5 text-xl border-black border-2 text-center h-full w-full hover:bg-red-100">
+          O
+        </div>
     <% end %>
     """
   end
