@@ -3,7 +3,7 @@ defmodule LvWeb.TicTacToe do
   alias Lv.TicTacToe.{Board, Game, ComputerPlayer, ComputerMoveServer}
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, board: Board.new(), winner: nil, draw: nil)}
+    {:ok, assign(socket, game: Game.new())}
   end
 
   def render(assigns) do
@@ -11,14 +11,20 @@ defmodule LvWeb.TicTacToe do
     <div class="flex justify-center">
       <div>
         <h1 class="text-center text-2xl mb-5">Tic-Tac-Toe</h1>
-        <h2 :if={@winner == :computer} class="text-red-500 text-2xl text-center mb-2">
+        <h2 :if={@game.winner == :computer} class="text-red-500 text-2xl text-center mb-2">
           Comptuer Wins!
         </h2>
-        <h2 :if={@winner == :player} class="text-green-500 text-2xl text-center mb-2">You Win!</h2>
-        <h2 :if={@draw} class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
-        <.board board={@board} done={@draw || @winner} />
+        <h2 :if={@game.winner == :player} class="text-green-500 text-2xl text-center mb-2">
+          You Win!
+        </h2>
+        <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
+        <.board board={@game.board} done={@game.draw || @game.winner} />
         <div class="flex justify-center">
-          <button :if={@draw || @winner} class="bg-black text-zinc-50 p-4 mt-5 hover:bg-gray-700" phx-click="play-again">
+          <button
+            :if={@game.draw || @game.winner}
+            class="bg-black text-zinc-50 p-4 mt-5 hover:bg-gray-700"
+            phx-click="play-again"
+          >
             Play Again
           </button>
         </div>
@@ -43,7 +49,7 @@ defmodule LvWeb.TicTacToe do
       <% :blank  -> %>
         <%= if @done do %>
           <div class="p-5 text-xl border-black border-2 text-center h-full w-full text-transparent hover:bg-red-100">
-          B
+            B
           </div>
         <% else %>
           <div
@@ -52,7 +58,7 @@ defmodule LvWeb.TicTacToe do
             phx-value-row={Enum.at(@coord, 0)}
             phx-value-col={Enum.at(@coord, 1)}
           >
-          B
+            B
           </div>
         <% end %>
       <% :x -> %>
@@ -68,34 +74,32 @@ defmodule LvWeb.TicTacToe do
   end
 
   def handle_event("play-again", _params, socket) do
-    {:noreply, assign(socket, winner: nil, draw: nil, board: Board.new())}
+    {:noreply, assign(socket, winner: nil, draw: nil, game: Game.new())}
   end
 
   def handle_event("mark", %{"row" => row, "col" => col}, socket) do
     coords = [row, col] |> Enum.map(&String.to_integer/1)
-    {:ok, new_board} = Board.mark(socket.assigns.board, coords, :x)
 
-    cond do
-      Game.draw_check(new_board) ->
-        {:noreply, assign(socket, board: new_board, draw: true)}
+    player_game =
+      Game.mark(socket.assigns.game, coords, :x)
+      |> Game.winner()
+      |> Game.draw_check()
 
-      Game.winner(new_board) == {true, :x} ->
-        {:noreply, assign(socket, board: new_board, winner: :player)}
+    if player_game.winner || player_game.draw do
+      {
+        :noreply,
+        assign(socket, game: player_game)
+      }
+    else
+      computer_move = ComputerMoveServer.get_move(player_game)
 
-      true ->
-        computer_move = ComputerMoveServer.get_move(new_board)
-        {:ok, new_board} = Board.mark(new_board, computer_move, :o)
-
-        case [Game.winner(new_board), Game.draw_check(new_board)] do
-          [{true, :o}, _] ->
-            {:noreply, assign(socket, board: new_board, winner: :computer)}
-
-          [_, true] ->
-            {:noreply, assign(socket, board: new_board, draw: true)}
-
-          _ ->
-            {:noreply, assign(socket, board: new_board)}
-        end
+      {:noreply,
+       assign(socket,
+         game:
+           Game.mark(player_game, computer_move, :o)
+           |> Game.winner()
+           |> Game.draw_check()
+       )}
     end
   end
 end
