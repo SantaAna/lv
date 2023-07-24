@@ -17,7 +17,7 @@ defmodule LvWeb.Router do
   scope "/", LvWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", HomeLive
     live "/guess", WrongLive
     live "/rps", RockPaperScissors
     live "/ttt", TicTacToe
