@@ -1,6 +1,6 @@
 defmodule Lv.TicTacToe.Game do
   alias Lv.TicTacToe.Board
-  defstruct [:board, :winner, :draw]
+  defstruct [:board, :winner, :draw, winning_coords: []]
 
   @type t :: %__MODULE__{
           board: map,
@@ -37,22 +37,23 @@ defmodule Lv.TicTacToe.Game do
       end
 
     case result do
-      {true, :x} ->
-        set_winner(game, :player)
+      {true, :x, winning_coords} ->
+        set_winner(game, :player, winning_coords)
 
-      {true, :o} ->
-        set_winner(game, :computer)
+      {true, :o, winning_coords} ->
+        set_winner(game, :computer, winning_coords)
 
       _ ->
         game
     end
   end
 
-  def set_winner(%__MODULE__{winner: nil, draw: false} = game, winner) do
+  def set_winner(%__MODULE__{winner: nil, draw: false} = game, winner, winning_coords) do
     Map.put(game, :winner, winner)
+    |> Map.put(:winning_coords, winning_coords)
   end
 
-  def set_winner(game, _) do
+  def set_winner(game, _, _) do
     game
   end
 
@@ -62,9 +63,9 @@ defmodule Lv.TicTacToe.Game do
 
   def all_same(groups) do
     for {_, group} <- groups, marker <- [:x, :o] do
-      {Enum.all?(group, fn {_k, v} -> v == marker end), marker}
+      {Enum.all?(group, fn {_k, v} -> v == marker end), marker, Map.keys(group)}
     end
-    |> Enum.find(:no_winner, fn {same, _marker} -> same end)
+    |> Enum.find(:no_winner, fn {same, _marker, _coords} -> same end)
   end
 
   def draw_check(%__MODULE__{board: board, winner: nil, draw: false} = game) do

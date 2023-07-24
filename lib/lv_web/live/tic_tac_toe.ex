@@ -18,7 +18,7 @@ defmodule LvWeb.TicTacToe do
           You Win!
         </h2>
         <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
-        <.board board={@game.board} done={@game.draw || @game.winner} />
+        <.board game={@game} />
         <div class="flex justify-center">
           <button
             :if={@game.draw || @game.winner}
@@ -37,7 +37,7 @@ defmodule LvWeb.TicTacToe do
     ~H"""
     <div class="grid grid-cols-3 h-52 w-52">
       <%= for x <- 1..3, y <- 1..3 do %>
-        <.board_square coord={[x, y]} board={@board} done={@done} />
+        <.board_square coord={[x, y]}  game={@game}/>
       <% end %>
     </div>
     """
@@ -45,9 +45,9 @@ defmodule LvWeb.TicTacToe do
 
   def board_square(assigns) do
     ~H"""
-    <%= case @board[@coord] do %>
-      <% :blank  -> %>
-        <%= if @done do %>
+    <%= case [@game.board[@coord], @coord in @game.winning_coords] do %>
+      <% [:blank, _] -> %>
+        <%= if @game.draw or @game.winner do %>
           <div class="p-5 text-xl border-black border-2 text-center h-full w-full text-transparent hover:bg-red-100">
             B
           </div>
@@ -61,12 +61,20 @@ defmodule LvWeb.TicTacToe do
             B
           </div>
         <% end %>
-      <% :x -> %>
+      <% [:x, false] -> %>
         <div class="p-5 text-xl border-black border-2 text-center h-full w-full hover:bg-red-100">
           X
         </div>
-      <% :o -> %>
+      <% [:x, true] -> %>
+        <div class="p-5 text-xl border-black border-2 text-center h-full w-full bg-green-200 hover:bg-red-100">
+          X
+        </div>
+      <% [:o, false] -> %>
         <div class="p-5 text-xl border-black border-2 text-center h-full w-full hover:bg-red-100">
+          O
+        </div>
+      <% [:o, true] -> %>
+        <div class="p-5 text-xl border-black border-2 text-center h-full w-full bg-red-200 hover:bg-red-100">
           O
         </div>
     <% end %>
