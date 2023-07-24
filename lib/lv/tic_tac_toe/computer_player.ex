@@ -36,21 +36,24 @@ defmodule Lv.TicTacToe.ComputerPlayer do
   """
   @spec minimax(map, :o | :x) :: {list(integer), integer}
   def minimax(game, turn \\ :o) do
-    free_spaces = Game.free_spaces(game) |> Enum.unzip() |> elem(0)
+    possible_moves = Game.free_spaces(game) |> Enum.unzip() |> elem(0)
+    game = game
+          |> Game.winner()
+          |> Game.draw_check()
 
-    case [free_spaces, turn, Game.winner(game)] do
+    case [turn, game] do
       #these clauses return tuples so they are compatible with elem call.
-      [[], _, _] ->
+      [_, %Game{draw: true}] ->
         {nil, 0}
 
-      [_, _, %Game{winner: :computer}] ->
+      [_,%Game{winner: :computer}] ->
         {nil, 1}
 
-      [_, _, %Game{winner: :player}] ->
+      [_, %Game{winner: :player}] ->
         {nil, -1}
 
       #consider our moves
-      [possible_moves, :o, _] ->
+      [:o, _] ->
         #create every possible board state.
         Enum.map(possible_moves, fn move ->
            game = Game.mark(game, move, :o)
@@ -62,7 +65,7 @@ defmodule Lv.TicTacToe.ComputerPlayer do
         |> Enum.max_by(fn {_move, score} -> score end)
       
       #opponent considers their moves
-      [possible_moves, :x, _] ->
+      [:x, _] ->
         Enum.map(possible_moves, fn move ->
           game = Game.mark(game, move, :x)
           {move, game}
