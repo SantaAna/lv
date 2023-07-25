@@ -21,6 +21,7 @@ defmodule LvWeb.Router do
     live "/guess", WrongLive
     live "/rps", RockPaperScissors
     live "/ttt", TicTacToe
+    live "/wordle", Wordle
   end
 
   # Other scopes may use custom stacks.
