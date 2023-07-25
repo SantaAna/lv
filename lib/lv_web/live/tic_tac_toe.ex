@@ -37,7 +37,7 @@ defmodule LvWeb.TicTacToe do
     ~H"""
     <div class="grid grid-cols-3 h-52 w-52">
       <%= for x <- 1..3, y <- 1..3 do %>
-        <.board_square coord={[x, y]}  game={@game}/>
+        <.board_square coord={[x, y]} game={@game} />
       <% end %>
     </div>
     """

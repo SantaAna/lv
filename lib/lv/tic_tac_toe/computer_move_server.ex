@@ -1,6 +1,6 @@
 defmodule Lv.TicTacToe.ComputerMoveServer do
   use GenServer
-  alias Lv.TicTacToe.ComputerPlayer 
+  alias Lv.TicTacToe.ComputerPlayer
 
   # public
   def start_link(_) do

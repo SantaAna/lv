@@ -1,7 +1,7 @@
 defmodule Lv.TicTacToe.ComputerPlayer do
   alias Lv.TicTacToe.{Board, Game}
 
-  @doc """ 
+  @doc """
   Will return the computer move given a board.
   """
 
@@ -37,41 +37,43 @@ defmodule Lv.TicTacToe.ComputerPlayer do
   @spec minimax(map, :o | :x) :: {list(integer), integer}
   def minimax(game, turn \\ :o) do
     possible_moves = Game.free_spaces(game) |> Enum.unzip() |> elem(0)
-    game = game
-          |> Game.winner()
-          |> Game.draw_check()
+
+    game =
+      game
+      |> Game.winner()
+      |> Game.draw_check()
 
     case [turn, game] do
-      #these clauses return tuples so they are compatible with elem call.
+      # these clauses return tuples so they are compatible with elem call.
       [_, %Game{draw: true}] ->
         {nil, 0}
 
-      [_,%Game{winner: :computer}] ->
+      [_, %Game{winner: :computer}] ->
         {nil, 1}
 
       [_, %Game{winner: :player}] ->
         {nil, -1}
 
-      #consider our moves
+      # consider our moves
       [:o, _] ->
-        #create every possible board state.
+        # create every possible board state.
         Enum.map(possible_moves, fn move ->
-           game = Game.mark(game, move, :o)
+          game = Game.mark(game, move, :o)
           {move, game}
         end)
-        #rate every board state according to its value recursively.
+        # rate every board state according to its value recursively.
         |> Enum.map(fn {move, game} -> {move, elem(minimax(game, :x), 1)} end)
-        #select the move with the maximum score
+        # select the move with the maximum score
         |> Enum.max_by(fn {_move, score} -> score end)
-      
-      #opponent considers their moves
+
+      # opponent considers their moves
       [:x, _] ->
         Enum.map(possible_moves, fn move ->
           game = Game.mark(game, move, :x)
           {move, game}
         end)
         |> Enum.map(fn {move, game} -> {move, elem(minimax(game, :o), 1)} end)
-        #here we take the minimum, since the opponent seeks to minimize our score.
+        # here we take the minimum, since the opponent seeks to minimize our score.
         |> Enum.min_by(fn {_move, score} -> score end)
     end
   end

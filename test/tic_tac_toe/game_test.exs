@@ -53,7 +53,7 @@ defmodule TicTacToe.GameTest do
              end)
              |> Enum.map(&Game.winner/1)
              |> Enum.all?(& &1.winner)
-      
+
       assert Enum.map(1..3, fn row ->
                for col <- 1..3, reduce: Game.new() do
                  acc -> Game.mark(acc, [row, col], :o)
@@ -71,7 +71,7 @@ defmodule TicTacToe.GameTest do
              end)
              |> Enum.map(&Game.winner/1)
              |> Enum.all?(& &1.winner)
-      
+
       assert Enum.map(1..3, fn col ->
                for row <- 1..3, reduce: Game.new() do
                  acc -> Game.mark(acc, [row, col], :o)
@@ -82,23 +82,24 @@ defmodule TicTacToe.GameTest do
     end
 
     test "will find a diagonal winner" do
-      diag1 = [[1,1], [2,2], [3,3]]
-      diag2 = [[1,3], [2,2], [3,1]]
-      assert Enum.map([diag1, diag2], fn diag -> 
-        for s <- diag, reduce: Game.new() do
-          acc -> Game.mark(acc, s, :o)
-        end
-      end)
-      |> Enum.map(&Game.winner/1)
-      |> Enum.all?(& &1.winner)
+      diag1 = [[1, 1], [2, 2], [3, 3]]
+      diag2 = [[1, 3], [2, 2], [3, 1]]
 
-      assert Enum.map([diag1, diag2], fn diag -> 
-        for s <- diag, reduce: Game.new() do
-          acc -> Game.mark(acc, s, :x)
-        end
-      end)
-      |> Enum.map(&Game.winner/1)
-      |> Enum.all?(& &1.winner)
+      assert Enum.map([diag1, diag2], fn diag ->
+               for s <- diag, reduce: Game.new() do
+                 acc -> Game.mark(acc, s, :o)
+               end
+             end)
+             |> Enum.map(&Game.winner/1)
+             |> Enum.all?(& &1.winner)
+
+      assert Enum.map([diag1, diag2], fn diag ->
+               for s <- diag, reduce: Game.new() do
+                 acc -> Game.mark(acc, s, :x)
+               end
+             end)
+             |> Enum.map(&Game.winner/1)
+             |> Enum.all?(& &1.winner)
     end
   end
 end

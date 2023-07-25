@@ -13,21 +13,21 @@ defmodule LvWeb.RockPaperScissors do
 
   def render(assigns) do
     ~H"""
-        <h1>Rock Paper Scissors</h1>
-        <%= case result(assigns) do %>
-          <% :computer_wins  -> %>
-            <.computer_win_message computer_choice={@computer_choice} player_choice={@player_choice} />
-          <% :player_wins  -> %>
-            <.player_win_message computer_choice={@computer_choice} player_choice={@player_choice} />
-          <% :draw  -> %>
-            <.draw_message computer_choice={@computer_choice} player_choice={@player_choice} />
-          <% _  -> %>
-            <div></div>
-        <% end %>
-        <h2 class="mt-10">Choose your throw</h2>
-        <div class="flex flex-row gap-5">
-          <.choice_button :for={title <- ~w(Rock Paper Scissors)} title={title} />
-        </div>
+    <h1>Rock Paper Scissors</h1>
+    <%= case result(assigns) do %>
+      <% :computer_wins  -> %>
+        <.computer_win_message computer_choice={@computer_choice} player_choice={@player_choice} />
+      <% :player_wins  -> %>
+        <.player_win_message computer_choice={@computer_choice} player_choice={@player_choice} />
+      <% :draw  -> %>
+        <.draw_message computer_choice={@computer_choice} player_choice={@player_choice} />
+      <% _  -> %>
+        <div></div>
+    <% end %>
+    <h2 class="mt-10">Choose your throw</h2>
+    <div class="flex flex-row gap-5">
+      <.choice_button :for={title <- ~w(Rock Paper Scissors)} title={title} />
+    </div>
     """
   end
 
