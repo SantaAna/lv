@@ -60,14 +60,8 @@ defmodule LvWeb.Wordle do
         {:noreply, assign(socket, invalid_reason: :too_long)}
 
       _ ->
-        game =
-          socket.assigns.game
-          |> Game.feedback(player_input)
-          |> Game.win?()
-          |> Game.advance_round()
-          |> Game.lose?()
 
-        {:noreply, assign(socket, game: game, invalid_reason: nil)}
+        {:noreply, assign(socket, game: Game.play_round(socket.assigns.game, player_input), invalid_reason: nil)}
     end
   end
 end
