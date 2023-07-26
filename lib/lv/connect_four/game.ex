@@ -54,6 +54,12 @@ defmodule Lv.ConnectFour.Game do
     end
   end
 
+  def open_cols(%__MODULE__{board: board}) do
+    Board.open_cols(board)
+  end
+
+  
+
   # def player_turn(%__MODULE__{winner: winner} = game) when winner != nil, do: game
   # def player_turn(%__MODULE__{draw: true} = game), do: game
 
@@ -71,7 +77,7 @@ defmodule Lv.ConnectFour.Game do
     computer_move =
       case comp_difficulty do
         :random -> ComputerPlayer.move(board, :random)
-        :perfect -> ComputerPlayer.move(board, :perfect)
+        :perfect -> ComputerPlayer.move(game, :perfect)
       end
 
     {:ok, board} = Board.mark(board, computer_move, :black)

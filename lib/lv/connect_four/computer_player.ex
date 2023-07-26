@@ -18,19 +18,19 @@ defmodule Lv.ConnectFour.ComputerPlayer do
   @spec perfect_move(map) :: integer
   def perfect_move(board), do: minimax(board)
 
-  @spec minimax(Board.t()) :: integer
-  def minimax(board) do
+  @spec minimax(Game.t) :: integer
+  def minimax(game) do
     {:ok, cache_pid} = Agent.start_link(fn -> %{} end)
-    {ret, _} = minimax(board, cache_pid, {5, 0})
+    {ret, _} = minimax(game, cache_pid, {6, 0})
     Agent.stop(cache_pid)
     ret
   end
 
-  @spec minimax(Board.t(), pid, {integer, integer}, :red | :black) :: tuple
-  def minimax(board, cache_pid, scry, turn \\ :black) do
-    free_cols = Board.open_cols(board)
+  @spec minimax(Game.t(), pid, {integer, integer}, :red | :black) :: tuple
+  def minimax(game, cache_pid, scry, turn \\ :black) do
+    free_cols = Game.open_cols(game)
 
-    case [free_cols, turn, Game.winner(%Game{board: board}), scry] do
+    case [free_cols, turn, Game.winner(game), scry] do
       # these clauses return tuples so they are compatible with elem call.
 
       # if we've looked ahead the maximum number of turns, return draw
@@ -50,26 +50,26 @@ defmodule Lv.ConnectFour.ComputerPlayer do
       [possible_moves, :black, _, {max, curr}] ->
         # create every possible board state.
         Enum.map(possible_moves, fn move ->
-          {:ok, board} = Board.mark(board, move, :black)
-          {move, board}
+           game = Game.mark(game, move, :black)
+          {move, game}
         end)
         # rate every board state according to its value recursively.
-        |> Enum.map(fn {move, board} ->
+        |> Enum.map(fn {move, game} ->
           {
             move,
-            # if the board state is already in the cache return it
-            if cache = Agent.get(cache_pid, fn cache -> Map.get(cache, board, false) end) do
+            # if the game state is already in the cache return it
+            if cache = Agent.get(cache_pid, fn cache -> Map.get(cache, game, false) end) do
               cache
             else
               # get our val
-              val = elem(minimax(board, cache_pid, {max, curr + 1}, :red), 1)
+              val = elem(minimax(game, cache_pid, {max, curr + 1}, :red), 1)
               # insert our val into our cache
               Agent.update(cache_pid, fn state ->
-                Map.put(state, board, val)
+                Map.put(state, game, val)
               end)
 
               # pull value from cache, probably can replace with val
-              Agent.get(cache_pid, fn state -> Map.get(state, board) end)
+              Agent.get(cache_pid, fn state -> Map.get(state, game) end)
             end
           }
         end)
@@ -79,21 +79,21 @@ defmodule Lv.ConnectFour.ComputerPlayer do
       # opponent considers their moves
       [possible_moves, :red, _, {max, curr}] ->
         Enum.map(possible_moves, fn move ->
-          {:ok, board} = Board.mark(board, move, :red)
-          {move, board}
+          game = Game.mark(game, move, :red)
+          {move, game}
         end)
-        |> Enum.map(fn {move, board} ->
+        |> Enum.map(fn {move, game} ->
           {move,
-           if cache = Agent.get(cache_pid, fn cache -> Map.get(cache, board, false) end) do
+           if cache = Agent.get(cache_pid, fn cache -> Map.get(cache, game, false) end) do
              cache
            else
-             val = elem(minimax(board, cache_pid, {max, curr + 1}, :black), 1)
+             val = elem(minimax(game, cache_pid, {max, curr + 1}, :black), 1)
 
              Agent.update(cache_pid, fn state ->
-               Map.put(state, board, val)
+               Map.put(state, game, val)
              end)
 
-             Agent.get(cache_pid, fn state -> Map.get(state, board) end)
+             Agent.get(cache_pid, fn state -> Map.get(state, game) end)
            end}
         end)
         # here we take the minimum, since the opponent seeks to minimize our score.

@@ -3,14 +3,14 @@ defmodule LvWeb.ConnectFour do
   alias Lv.ConnectFour.Game
 
   def mount(_params, _session, conn) do
-    {:ok, assign(conn, game: Game.new())}
+    {:ok, assign(conn, game: Game.new(computer_difficulty: :perfect))}
   end
 
   def render(assigns) do
     ~H"""
     <h1>Welcome to Connect Four!</h1>
     <h2 :if={@game.winner == :player} class="text-emerald-500">You Win!</h2>
-    <h2 :if={@game.winner == :computer} class="text-red-400">You Win!</h2>
+    <h2 :if={@game.winner == :computer} class="text-red-600">You Lose!</h2>
     <h2 :if={@game.draw} class="text-yellow-300">Draw!</h2>
     <.connect_four_board game={@game}/>
     <button :if={@game.winner || @game.draw} class="mt-5" phx-click="play-again">Play Again</button>
@@ -58,13 +58,12 @@ defmodule LvWeb.ConnectFour do
   end
 
   def handle_event("play-again", _params, conn) do
-    {:noreply, assign(conn, game: Game.new())}
+    {:noreply, assign(conn, game: Game.new(computer_difficulty: :perfect))}
   end
 
   def handle_event("drop-piece", %{"col" => col}, conn) do
     play = String.to_integer(col) 
     game = Game.play_round(conn.assigns.game, play)
-    IO.inspect(game)
     {:noreply, assign(conn, game: game)}
   end
 end
