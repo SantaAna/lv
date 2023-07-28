@@ -15,7 +15,9 @@ defmodule LvWeb.HomeLive do
     <.link navigate={~p"/ttt"} class="text-xl">TicTacToe</.link>
     <p class="mb-3">Play the computer at TicTacToe, but abandon all hope of victory</p>
     <.link navigate={~p"/wordle"} class="text-xl">Wordle</.link>
-    <p>Try to guess a five letter word in five tries.  You'll be shown a hint after each try.</p>
+    <p class="mb-3">Try to guess a five letter word in five tries.  You'll be shown a hint after each try.</p>
+    <.link navigate={~p"/connectfour"} class="text-xl">Connect Four</.link>
+    <p>Try to connect four before the computer - look out it has some tricks up its circuits.</p>
     """
   end
 end
