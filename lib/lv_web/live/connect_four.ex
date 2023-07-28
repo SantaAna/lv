@@ -27,32 +27,47 @@ defmodule LvWeb.ConnectFour do
 
   def connect_four_row(assigns) do
     ~H"""
-    <div class="flex flex-col">
-      <.connect_four_square marker={marker} col_num={@col_num} :for={marker <- @col}/>
+    <div class="flex flex-col group">
+      <.connect_four_square marker={marker}} col_num={@col_num} :for={marker <- Enum.chunk_every(@col, 2, 1)}/>
     </div>
     """
   end
 
-  def connect_four_square(%{marker: :red} = assigns) do
+  def connect_four_square(%{marker: [:red, _]} = assigns), do: Map.put(assigns, :marker, [:red]) |> connect_four_square()
+
+  def connect_four_square(%{marker: [:red]} = assigns) do
     ~H"""
     <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
-      <div class="h-9 w-9 rounded-full bg-red-700"></div>
+      <div class="h-9 w-9 rounded-full bg-red-700" phx-value-col={@col_num} phx-click="drop-piece"></div>
     </div>
     """
   end
 
-  def connect_four_square(%{marker: :black} = assigns) do
+
+  def connect_four_square(%{marker: [:black, _]} = assigns), do: Map.put(assigns, :marker, [:black]) |> connect_four_square()
+
+  def connect_four_square(%{marker: [:black]} = assigns) do
     ~H"""
     <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
-      <div class="h-9 w-9 rounded-full bg-black"></div>
+      <div class="h-9 w-9 rounded-full bg-black" phx-value-col={@col_num} phx-click="drop-piece"></div>
     </div>
     """
   end
 
-  def connect_four_square(%{marker: :blank} = assigns) do
+  def connect_four_square(%{marker: [:blank, :blank]} = assigns) do
     ~H"""
     <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
-      <div class="h-9 w-9 rounded-full bg-white hover:bg-green-200" phx-value-col={@col_num} phx-click="drop-piece"></div>
+      <div class="h-9 w-9 rounded-full bg-white" phx-value-col={@col_num} phx-click="drop-piece"></div>
+    </div>
+    """
+  end
+
+  def connect_four_square(%{marker: [:blank, _]} = assigns), do: Map.put(assigns, :marker, [:blank]) |> connect_four_square()
+
+  def connect_four_square(%{marker: [:blank]} = assigns) do
+    ~H"""
+    <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
+      <div class="h-9 w-9 rounded-full bg-white group-hover:bg-green-200" phx-value-col={@col_num} phx-click="drop-piece"></div>
     </div>
     """
   end
