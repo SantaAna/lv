@@ -4,6 +4,9 @@ defmodule LvWeb.ConnectFour do
 
   def mount(_params, _session, conn) do
     {:ok, assign(conn, game: Game.new(computer_difficulty: :perfect))}
+    {:ok, server} = GameServer.start()
+    IO.inspect(server)
+    {:ok, assign(conn, game: Game.new(computer_difficulty: :perfect), server: server)}
   end
 
   def render(assigns) do
@@ -74,11 +77,21 @@ defmodule LvWeb.ConnectFour do
 
   def handle_event("play-again", _params, conn) do
     {:noreply, assign(conn, game: Game.new(computer_difficulty: :perfect))}
+    {:ok, server} = GameServer.start()
+
+    {:noreply,
+     assign(conn,
+       game: Game.new(computer_difficulty: :perfect),
+       server: server
+     )}
   end
 
   def handle_event("drop-piece", %{"col" => col}, conn) do
     play = String.to_integer(col) 
     game = Game.play_round(conn.assigns.game, play)
+    play = String.to_integer(col)
+    game = GameServer.player_move_single(conn.assigns.server, play)
+    if game.winner || game.draw, do: GameServer.release(conn.assigns.server)
     {:noreply, assign(conn, game: game)}
   end
 end
