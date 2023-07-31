@@ -111,6 +111,9 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
     """
   end
 
+  def terminate(_reason, socket) do
+    if socket.assigns.state in ["started", "opponent-move", "your-move"], do: GameServer.resign_game(socket.assigns.server, self())
+    if socket.assigns.state == "waiting", do: PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
   end
 
 
