@@ -1,12 +1,12 @@
 defmodule LvWeb.ConnectFour do
   use LvWeb, :live_view
+  import LvWeb.ConnectFourComponents
   alias Lv.ConnectFour.Game
   alias Lv.ConnectFour.GameServer
   alias Lv.ConnectFour.GameTrackerServer, as: TrackerServer
   alias Phoenix.PubSub
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do
-    lobby_id = String.to_integer(lobby_id)
+def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = TrackerServer.get_game(lobby_id)
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
     GameServer.player_join(lobby_info.game_server, self())
@@ -55,13 +55,11 @@ defmodule LvWeb.ConnectFour do
     <h1>Welcome to Connect Four!</h1>
     <%= case [@state, @multiplayer] do %>
       <% [ "waiting", true ] -> %>
-        <h2>Waiting for opponent to join</h2>
-          <button phx-click="kill-lobby">
-            Leave Lobby
-          </button>
+        <.multiplayer_wait/>
       <% ["started", true] -> %>
-        <h2>Game is starting</h2>
+        <.multiplayer_start> 
         <.connect_four_board game={@game} state={@state} interact={false} />
+        </.multiplayer_start>
       <% ["opponent-move", true] -> %>
         <h2>Waiting for opponent to make move</h2>
         <.connect_four_board game={@game} state={@state} interact={false} />
@@ -113,67 +111,8 @@ defmodule LvWeb.ConnectFour do
     """
   end
 
-  def connect_four_board(assigns) do
-    ~H"""
-    <div class="flex flex-row-reverse border-yellow-400 border-4 rounded-md w-min">
-      <.connect_four_row
-        :for={{col, col_num} <- Game.get_cols(@game)}
-        col={col}
-        col_num={col_num}
-        interact={@interact}
-      />
-    </div>
-    """
   end
 
-  def connect_four_row(assigns) do
-    ~H"""
-    <div class="flex flex-col group" phx-value-col={@col_num} phx-click={@interact && "drop-piece"}>
-      <.connect_four_square :for={marker <- Enum.chunk_every(@col, 2, 1)} marker={marker} } />
-    </div>
-    """
-  end
-
-  def connect_four_square(%{marker: [:red, _]} = assigns),
-    do: Map.put(assigns, :marker, [:red]) |> connect_four_square()
-
-  def connect_four_square(%{marker: [:red]} = assigns) do
-    ~H"""
-    <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
-      <div class="h-9 w-9 rounded-full bg-red-700"></div>
-    </div>
-    """
-  end
-
-  def connect_four_square(%{marker: [:black, _]} = assigns),
-    do: Map.put(assigns, :marker, [:black]) |> connect_four_square()
-
-  def connect_four_square(%{marker: [:black]} = assigns) do
-    ~H"""
-    <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
-      <div class="h-9 w-9 rounded-full bg-black"></div>
-    </div>
-    """
-  end
-
-  def connect_four_square(%{marker: [:blank, :blank]} = assigns) do
-    ~H"""
-    <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
-      <div class="h-9 w-9 rounded-full bg-white"></div>
-    </div>
-    """
-  end
-
-  def connect_four_square(%{marker: [:blank, _]} = assigns),
-    do: Map.put(assigns, :marker, [:blank]) |> connect_four_square()
-
-  def connect_four_square(%{marker: [:blank]} = assigns) do
-    ~H"""
-    <div class="flex flex-row justify-center items-center h-10 w-10 bg-yellow-400">
-      <div class="h-9 w-9 rounded-full bg-white group-hover:bg-green-200"></div>
-    </div>
-    """
-  end
 
   def handle_event("play-again", _params, conn) do
     {:ok, server} = GameServer.start()
@@ -203,7 +142,6 @@ defmodule LvWeb.ConnectFour do
   end
 
   def handle_event("kill-lobby", _params, socket) do
-    IO.inspect("socket: #{inspect socket}", label: "killing lobby call")
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
     {:noreply, push_navigate(socket, to: ~p"/connectfour_launch")}
   end
