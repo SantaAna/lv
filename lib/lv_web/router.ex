@@ -23,6 +23,7 @@ defmodule LvWeb.Router do
     live "/ttt", TicTacToe
     live "/wordle", Wordle
     live "/connectfour", ConnectFour
+    live "/connectfour_launch", ConnectFourLaunch
   end
 
   # Other scopes may use custom stacks.
