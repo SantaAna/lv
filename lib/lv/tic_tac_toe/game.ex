@@ -1,5 +1,6 @@
 defmodule Lv.TicTacToe.Game do
   alias Lv.TicTacToe.Board
+  alias Lv.TicTacToe.ComputerMoveServer
   defstruct [:board, :winner, :draw, winning_coords: []]
 
   @type t :: %__MODULE__{
@@ -27,6 +28,7 @@ defmodule Lv.TicTacToe.Game do
     Board.free_spaces(board)
   end
 
+
   @spec winner(map) :: :no_winner | {true, atom}
   def winner(%__MODULE__{board: board} = game) do
     result =
@@ -47,6 +49,24 @@ defmodule Lv.TicTacToe.Game do
         game
     end
   end
+
+  def play_round(game, move) do
+    game  
+    |> mark(move, :x)
+    |> winner()
+    |> draw_check()
+    |> computer_move()
+    |> winner()
+    |> draw_check()
+  end
+
+  def computer_move(%__MODULE__{winner: nil, draw: false} = game) do
+    computer_move = ComputerMoveServer.get_move(game) 
+    mark(game, computer_move, :o)
+  end
+
+  def computer_move(%__MODULE__{} = game), do: game
+  
 
   def set_winner(%__MODULE__{winner: nil, draw: false} = game, winner, winning_coords) do
     Map.put(game, :winner, winner)

@@ -87,27 +87,6 @@ defmodule LvWeb.TicTacToe do
 
   def handle_event("mark", %{"row" => row, "col" => col}, socket) do
     coords = [row, col] |> Enum.map(&String.to_integer/1)
-
-    player_game =
-      Game.mark(socket.assigns.game, coords, :x)
-      |> Game.winner()
-      |> Game.draw_check()
-
-    if player_game.winner || player_game.draw do
-      {
-        :noreply,
-        assign(socket, game: player_game)
-      }
-    else
-      computer_move = ComputerMoveServer.get_move(player_game)
-
-      {:noreply,
-       assign(socket,
-         game:
-           Game.mark(player_game, computer_move, :o)
-           |> Game.winner()
-           |> Game.draw_check()
-       )}
-    end
+    {:noreply, assign(socket, game: Game.play_round(socket.assigns.game, coords))}
   end
 end
