@@ -184,7 +184,7 @@ defmodule LvWeb.ConnectFourComponents do
 
   def connect_four_row(assigns) do
     ~H"""
-    <div class="flex flex-col group" phx-value-col={@col_num} phx-click={@interact && "drop-piece"}>
+    <div class={"flex flex-col #{if @interact, do: "group", else: ""}"} phx-value-col={@col_num} phx-click={@interact && "drop-piece"}>
       <.connect_four_square :for={marker <- Enum.chunk_every(@col, 2, 1)} marker={marker} } />
     </div>
     """
