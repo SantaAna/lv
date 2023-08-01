@@ -1,11 +1,11 @@
 defmodule LvWeb.ConnectFourLaunch do
   use LvWeb, :live_view
   alias Phoenix.PubSub
-  alias Lv.ConnectFour.GameTrackerServer, as: TrackerServer
+  alias Lv.LobbyServer 
 
   def mount(_params, _session, socket) do
     PubSub.subscribe(Lv.PubSub, "lobbies")
-    lobbies = TrackerServer.list_games() 
+    lobbies = LobbyServer.list_games() 
               |> Enum.filter(&(&1.status == :waiting_for_opponent))
               |> Enum.sort_by(& &1.id)
     {:ok, assign(socket, lobbies: lobbies)}
@@ -40,8 +40,8 @@ defmodule LvWeb.ConnectFourLaunch do
     """
   end
 
-  def handle_info({:new, {:id, lobby_id}}, socket) do
-    {:ok, lobby} = TrackerServer.get_game(lobby_id)
+  def handle_info({:new, %{id: lobby_id}}, socket) do
+    {:ok, lobby} = LobbyServer.get_game(lobby_id)
     lobbies = [lobby | socket.assigns.lobbies]
     {:noreply, assign(socket, lobbies: lobbies)} 
   end
@@ -55,8 +55,8 @@ defmodule LvWeb.ConnectFourLaunch do
   end
 
   def handle_event("create-lobby", _params, socket) do
-     id = TrackerServer.get_id()
-     PubSub.broadcast(Lv.PubSub, "lobbies", {:new, {:id, id}})
+     id = LobbyServer.get_id()
+     PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: Lv.ConnectFour.Game}})
 
      {:noreply, push_navigate(socket, to: ~p"/connectfour?#{[lobby_id: id, state: "waiting"]}")}
   end

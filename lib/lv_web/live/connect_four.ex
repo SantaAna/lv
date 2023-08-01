@@ -31,7 +31,8 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
      assign(conn,
        game: Game.new(computer_difficulty: :perfect),
        server: lobby_info.game_server,
-       state: "waiting", lobby_id: lobby_id,
+       state: "waiting",
+       lobby_id: lobby_id,
        multiplayer: true
      )}
   end
@@ -51,70 +52,49 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
 
   def render(assigns) do
     ~H"""
-    <h1>Welcome to Connect Four!</h1>
+    <h1 class="text-2xl mb-5 text-center">Connect Four</h1>
     <%= case [@state, @multiplayer] do %>
       <% [ "waiting", true ] -> %>
-        <.multiplayer_wait/>
+        <.multiplayer_wait />
       <% ["started", true] -> %>
-        <.multiplayer_start> 
-        <.connect_four_board game={@game} state={@state} interact={false} />
+        <.multiplayer_start>
+          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
         </.multiplayer_start>
       <% ["opponent-move", true] -> %>
-        <h2>Waiting for opponent to make move</h2>
-        <.connect_four_board game={@game} state={@state} interact={false} />
-        <button phx-click="resign"> Resign Game </button>
+        <.multiplayer_opp_turn>
+          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
+        </.multiplayer_opp_turn>
       <% ["your-move", true] -> %>
-        <h2>Make your move</h2>
-        <.connect_four_board game={@game} state={@state} interact={true} />
-        <button phx-click="resign"> Resign Game </button>
+        <.multiplayer_your_turn>
+          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={true} />
+        </.multiplayer_your_turn>
       <% ["opp-resigned", true] -> %>
-        <h2 class="text-emerald-500">You Win!</h2>
-        <h3> Your opponent resigned </h3>
-        <.connect_four_board game={@game} state={@state} interact={false} />
-          <.link navigate={~p"/connectfour_launch"}>
-          <button>
-            Return to Lobby
-          </button>
-          </.link>
+        <.multiplayer_opp_resigned>
+          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
+        </.multiplayer_opp_resigned>
       <% ["game-over", true] -> %>
-        <%= cond do %>
-          <% @game.draw  -> %>
-            <h2 class="text-yellow-300">Draw!</h2>
-          <% @game.winner == @color -> %>
-            <h2 class="text-emerald-500">You Win!</h2>
-          <% true -> %>
-            <h2 class="text-red-600">You Lose!</h2>
-        <% end %>
-        <.connect_four_board game={@game} state={@state} interact={false} />
-          <.link navigate={~p"/connectfour_launch"}>
-          <button>
-            Return to Lobby
-          </button>
-          </.link>
+        <.multiplayer_game_over game={@game} color={@color}>
+          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
+        </.multiplayer_game_over>
       <% [_, false] -> %>
-        <%= cond do %>
-          <% @game.draw  -> %>
-            <h2 class="text-yellow-300">Draw!</h2>
-          <% @game.winner == @color -> %>
-            <h2 class="text-emerald-500">You Win!</h2>
-          <% @game.winner == nil -> %>
-            <h2></h2>
-          <% true -> %>
-            <h2 class="text-red-600">You Lose!</h2>
-        <% end %>
-        <.connect_four_board game={@game} state={@state} interact={!@game.draw || !@game.winner} />
-        <button :if={@game.winner || @game.draw} class="mt-5" phx-click="play-again">
-          Play Again
-        </button>
+        <.single_player_display game={@game} color={@color}>
+          <.connect_four_board
+            cols={Game.get_cols(@game)}
+            state={@state}
+            interact={!@game.draw || !@game.winner}
+          />
+        </.single_player_display>
     <% end %>
     """
   end
 
   def terminate(_reason, socket) do
-    if socket.assigns.state in ["started", "opponent-move", "your-move"], do: GameServer.resign_game(socket.assigns.server, self())
-    if socket.assigns.state == "waiting", do: PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
-  end
+    if socket.assigns.state in ["started", "opponent-move", "your-move"],
+      do: GameServer.resign_game(socket.assigns.server, self())
 
+    if socket.assigns.state == "waiting",
+      do: PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
+  end
 
   def handle_event("play-again", _params, conn) do
     {:ok, server} = GameServer.start()

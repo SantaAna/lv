@@ -1,7 +1,7 @@
-defmodule Lv.ConnectFour.GameTrackerServer do
+defmodule Lv.LobbyServer do
   use GenServer
   alias Phoenix.PubSub
-  alias Lv.ConnectFour.GameTracker
+  alias Lv.Lobby
 
   # client side
   def start_link(_) do
@@ -40,8 +40,8 @@ defmodule Lv.ConnectFour.GameTrackerServer do
   end
   
   @impl true
-  def handle_info({:new, %{id: id, module: module}}, {games, current_id}) do
-    tracker = GameTracker.new(id) 
+  def handle_info({:new, %{id: id, mod: module}}, {games, current_id}) do
+    tracker = Lobby.new(id, module) 
     {:noreply, {[tracker | games], current_id}}
   end
 
