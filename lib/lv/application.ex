@@ -20,7 +20,8 @@ defmodule Lv.Application do
       LvWeb.Endpoint,
       # Start a worker by calling: Lv.Worker.start_link(arg)
       # {Lv.Worker, arg}
-      {Lv.TicTacToe.ComputerMoveServer, []}
+      {Lv.TicTacToe.ComputerMoveServer, []},
+      {Lv.ConnectFour.GameTrackerServer, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

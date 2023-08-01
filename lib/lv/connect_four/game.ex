@@ -93,10 +93,10 @@ defmodule Lv.ConnectFour.Game do
         game
 
       {:winner, :red} ->
-        Map.put(game, :winner, :player)
+        Map.put(game, :winner, :red)
 
       {:winner, :black} ->
-        Map.put(game, :winner, :computer)
+        Map.put(game, :winner, :black)
     end
   end
 
