@@ -1,7 +1,7 @@
 defmodule Lv.Lobby do
   defstruct [:player1_pid, :player2_pid, :game_server, :status, :id]
 
-  alias Lv.ConnectFour.GameServer
+  alias Lv.GameServer
 
   @type status :: :in_progress | :completed | :waiting_for_opponent
 
@@ -14,8 +14,8 @@ defmodule Lv.Lobby do
         }
 
 
-  def new(id, module) when is_integer(id) do
-    {:ok, server} = GameServer.start([module: module])
+  def new(id, module, player) when is_integer(id) do
+    {:ok, server} = GameServer.start([module: module, player: player])
     %__MODULE__{
       id: id,
       player1_pid: nil,
