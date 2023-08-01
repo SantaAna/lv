@@ -3,11 +3,11 @@ defmodule LvWeb.ConnectFour do
   import LvWeb.ConnectFourComponents
   alias Lv.ConnectFour.Game
   alias Lv.ConnectFour.GameServer
-  alias Lv.ConnectFour.GameTrackerServer, as: TrackerServer
+  alias Lv.LobbyServer
   alias Phoenix.PubSub
 
 def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lobby_id = String.to_integer(lobby_id)
-    {:ok, lobby_info} = TrackerServer.get_game(lobby_id)
+    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
     GameServer.player_join(lobby_info.game_server, self())
     GameServer.start_game(lobby_info.game_server)
@@ -22,10 +22,9 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
      )}
   end
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"} = params, _session, conn) do
-    IO.inspect(params, label: "params passsed to mount")
+  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, _session, conn) do
     lobby_id = String.to_integer(lobby_id)
-    {:ok, lobby_info} = TrackerServer.get_game(lobby_id)
+    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
     GameServer.player_join(lobby_info.game_server, self())
 
     {:ok,
