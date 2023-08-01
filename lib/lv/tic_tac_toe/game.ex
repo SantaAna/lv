@@ -9,7 +9,7 @@ defmodule Lv.TicTacToe.Game do
           draw: false | true
         }
 
-  def new() do
+  def new(_) do
     %__MODULE__{
       board: Board.new(),
       winner: nil,

@@ -3,7 +3,7 @@ defmodule LvWeb.TicTacToe do
   alias Lv.TicTacToe.{Board, Game, ComputerPlayer, ComputerMoveServer}
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, game: Game.new())}
+    {:ok, assign(socket, game: Game.new([]))}
   end
 
   def render(assigns) do
@@ -82,7 +82,7 @@ defmodule LvWeb.TicTacToe do
   end
 
   def handle_event("play-again", _params, socket) do
-    {:noreply, assign(socket, winner: nil, draw: nil, game: Game.new())}
+    {:noreply, assign(socket, winner: nil, draw: nil, game: Game.new([]))}
   end
 
   def handle_event("mark", %{"row" => row, "col" => col}, socket) do

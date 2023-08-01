@@ -47,7 +47,7 @@ defmodule LvWeb.ConnectFourLaunch do
   end
 
   def handle_info({:delete, {:id, lobby_id}}, socket) do
-    {:noreply, assign(socket, lobbies: Enum.reject(socket.assigns.lobbies, & &1 == lobby_id))} 
+    {:noreply, assign(socket, lobbies: Enum.reject(socket.assigns.lobbies, & &1.id == lobby_id))} 
   end
 
   def handle_event("join", %{"id" => id}, socket) do
@@ -56,7 +56,7 @@ defmodule LvWeb.ConnectFourLaunch do
 
   def handle_event("create-lobby", _params, socket) do
      id = LobbyServer.get_id()
-     PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: Lv.ConnectFour.Game}})
+     PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: Lv.ConnectFour.Game, player: LvWeb.ConnectFour}})
 
      {:noreply, push_navigate(socket, to: ~p"/connectfour?#{[lobby_id: id, state: "waiting"]}")}
   end

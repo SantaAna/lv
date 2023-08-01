@@ -2,7 +2,7 @@ defmodule LvWeb.ConnectFour do
   use LvWeb, :live_view
   import LvWeb.ConnectFourComponents
   alias Lv.ConnectFour.Game
-  alias Lv.ConnectFour.GameServer
+  alias Lv.GameServer
   alias Lv.LobbyServer
   alias Phoenix.PubSub
 
@@ -144,7 +144,7 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
     GenServer.cast(pid, {:take_turn, game_state})
   end
 
-  def set_color(pid, color) do
+  def set_marker(pid, color) do
     GenServer.call(pid, {:set_color, color})
   end
 
