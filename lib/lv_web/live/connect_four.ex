@@ -6,7 +6,8 @@ defmodule LvWeb.ConnectFour do
   alias Lv.LobbyServer
   alias Phoenix.PubSub
 
-def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lobby_id = String.to_integer(lobby_id)
+  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do
+    lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
     GameServer.player_join(lobby_info.game_server, self())
@@ -14,7 +15,7 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
 
     {:ok,
      assign(conn,
-       game: Game.new(computer_difficulty: :perfect),
+       game: GameServer.get_game(lobby_info.game_server),
        server: lobby_info.game_server,
        state: "started",
        lobby_id: lobby_id,
@@ -29,7 +30,7 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
 
     {:ok,
      assign(conn,
-       game: Game.new(computer_difficulty: :perfect),
+       game: GameServer.get_game(lobby_info.game_server),
        server: lobby_info.game_server,
        state: "waiting",
        lobby_id: lobby_id,
@@ -38,54 +39,16 @@ def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do lob
   end
 
   def mount(_params, _session, conn) do
-    {:ok, server} = GameServer.start()
+    {:ok, server} = GameServer.start(module: Lv.ConnectFour.Game, module_args: [])
 
     {:ok,
      assign(conn,
-       game: Game.new(computer_difficulty: :perfect),
+       game: GameServer.get_game(server),
        server: server,
        state: "started",
        multiplayer: false,
        color: :red
      )}
-  end
-
-  def render(assigns) do
-    ~H"""
-    <h1 class="text-2xl mb-5 text-center">Connect Four</h1>
-    <%= case [@state, @multiplayer] do %>
-      <% [ "waiting", true ] -> %>
-        <.multiplayer_wait />
-      <% ["started", true] -> %>
-        <.multiplayer_start>
-          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
-        </.multiplayer_start>
-      <% ["opponent-move", true] -> %>
-        <.multiplayer_opp_turn>
-          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
-        </.multiplayer_opp_turn>
-      <% ["your-move", true] -> %>
-        <.multiplayer_your_turn>
-          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={true} />
-        </.multiplayer_your_turn>
-      <% ["opp-resigned", true] -> %>
-        <.multiplayer_opp_resigned>
-          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
-        </.multiplayer_opp_resigned>
-      <% ["game-over", true] -> %>
-        <.multiplayer_game_over game={@game} color={@color}>
-          <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
-        </.multiplayer_game_over>
-      <% [_, false] -> %>
-        <.single_player_display game={@game} color={@color}>
-          <.connect_four_board
-            cols={Game.get_cols(@game)}
-            state={@state}
-            interact={!@game.draw || !@game.winner}
-          />
-        </.single_player_display>
-    <% end %>
-    """
   end
 
   def terminate(_reason, socket) do
