@@ -8,6 +8,10 @@ defmodule Lv.GameServer do
     GenServer.start(__MODULE__, opts)
   end
 
+  def get_game(pid) do
+    GenServer.call(pid, :get_game)
+  end
+
   def player_join(pid, player_pid) do
     GenServer.call(pid, {:add_player, player_pid})
   end
@@ -36,7 +40,7 @@ defmodule Lv.GameServer do
   @impl true
   def init(opts) do
     {:ok,
-     %{game: opts[:module].new(opts), player1_pid: nil, player2_pid: nil, player: opts[:player]}}
+     %{game: opts[:module].new(opts[:module_args]), player1_pid: nil, player2_pid: nil, player: opts[:player]}}
   end
 
   @impl true
@@ -107,6 +111,11 @@ defmodule Lv.GameServer do
   def handle_call({:player_move_single, column}, _from, %{game: game} = state) do
     updated_game = Lv.Game.play_round(game, column)
     {:reply, updated_game, Map.put(state, :game, updated_game)}
+  end
+
+  @impl true
+  def handle_call(:get_game, _from, %{game: game} = state) do
+    {:reply, game, state} 
   end
 
   @impl true
