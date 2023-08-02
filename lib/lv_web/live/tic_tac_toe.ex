@@ -101,13 +101,15 @@ defmodule LvWeb.TicTacToe do
               </.link_button>
             </.link>
           <% [_, false] -> %>
-            <h2 :if={@game.draw} class="text-red-500 text-2xl text-center mb-2">
-              Comptuer Wins!
+            <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">
+              Cat's Game!
             </h2>
             <h2 :if={@game.winner == :x} class="text-green-500 text-2xl text-center mb-2">
               You Win!
             </h2>
-            <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
+                <h2 :if={@game.winner == :o} class="text-red-500 text-2xl text-center mb-2">
+                  You Lose!
+                </h2>
             <.board game={@game} interact={!@game.winner && !@game.draw} />
             <div class="flex justify-center">
               <button

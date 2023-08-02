@@ -125,8 +125,8 @@ defmodule Lv.GameServer do
       ) do
     updated_game =
       Lv.Game.mark(game, col, color)
-      |> Lv.Game.draw_check()
       |> Lv.Game.win_check()
+      |> Lv.Game.draw_check()
 
     cond do
       Lv.Game.winner?(updated_game) || Lv.Game.draw?(updated_game) ->
@@ -150,8 +150,8 @@ defmodule Lv.GameServer do
       ) do
     updated_game =
       Lv.Game.mark(game, col, color)
-      |> Lv.Game.draw_check()
       |> Lv.Game.win_check()
+      |> Lv.Game.draw_check()
 
     cond do
       Lv.Game.winner?(updated_game) || Lv.Game.draw?(updated_game) ->
