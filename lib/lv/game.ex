@@ -6,6 +6,7 @@ defprotocol Lv.Game do
   def winner?(game)
   def draw?(game)
   def markers(game)
+  def name(game)
 end
 
 defimpl Lv.Game, for: Lv.ConnectFour.Game do
@@ -30,6 +31,7 @@ defimpl Lv.Game, for: Lv.ConnectFour.Game do
   def markers(_game) do
     [:red, :black]
   end
+  def name(_game), do: "connectfour"
 end
 
 defimpl Lv.Game, for: Lv.TicTacToe.Game  do
@@ -54,4 +56,5 @@ defimpl Lv.Game, for: Lv.TicTacToe.Game  do
   def markers(_game) do
     [:x, :o]
   end
+  def name(_game), do: "tictactoe"
 end

@@ -17,17 +17,13 @@ defmodule Lv.Lobby do
 
   def new(id, module, player) when is_integer(id) do
     {:ok, server} = GameServer.start([module: module, player: player, module_arg: []])
-    game = case module do
-      Lv.ConnectFour.Game -> "connectfour"
-      Lv.TicTacToe.Game -> "tictactoe"
-    end
     %__MODULE__{
       id: id,
       player1_pid: nil,
       player2_pid: nil,
       game_server: server,
       status: :waiting_for_opponent,
-      game: game
+      game: Lv.Game.name(GameServer.get_game(server))
     }
   end
 end

@@ -17,6 +17,7 @@ defmodule Lv.TicTacToe.Game do
     }
   end
 
+
   def mark(%__MODULE__{} = game, mark_spot, mark_symbol) do
     Map.update!(game, :board, fn board ->
       {:ok, new_board} = Board.mark(board, mark_spot, mark_symbol)
