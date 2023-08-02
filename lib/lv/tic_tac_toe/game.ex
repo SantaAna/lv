@@ -40,10 +40,10 @@ defmodule Lv.TicTacToe.Game do
 
     case result do
       {true, :x, winning_coords} ->
-        set_winner(game, :player, winning_coords)
+        set_winner(game, :x, winning_coords)
 
       {true, :o, winning_coords} ->
-        set_winner(game, :computer, winning_coords)
+        set_winner(game, :o, winning_coords)
 
       _ ->
         game
