@@ -8,7 +8,7 @@ defmodule Lv.ConnectFour.Game do
   def new(opts \\ []) do
     opts =
       opts
-      |> Keyword.put_new(:computer_difficulty, :random)
+      |> Keyword.put_new(:computer_difficulty, :perfect)
 
     %__MODULE__{
       board: Board.new(),
