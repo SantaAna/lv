@@ -55,19 +55,19 @@ defmodule LvWeb.ConnectFourComponents do
     """
   end
 
-  slot :inner_block, required: true
-  attr :rest, :global
+  # slot :inner_block, required: true
+  # attr :rest, :global
 
-  def link_button(assigns) do
-    ~H"""
-    <button
-      class="rounded-md m-3 px-3 py-3 text-gray-50 bg-black font-bold cursor-pointer tracking-wider hover:bg-gray-700 transition-all"
-      {@rest}
-    >
-      <%= render_slot(@inner_block) %>
-    </button>
-    """
-  end
+  # def link_button(assigns) do
+  #   ~H"""
+  #   <button
+  #     class="rounded-md m-3 px-3 py-3 text-gray-50 bg-black font-bold cursor-pointer tracking-wider hover:bg-gray-700 transition-all"
+  #     {@rest}
+  #   >
+  #     <%= render_slot(@inner_block) %>
+  #   </button>
+  #   """
+  # end
 
   def pick_banner(assigns) do
     ~H"""
@@ -161,7 +161,7 @@ defmodule LvWeb.ConnectFourComponents do
   def multiplayer_start(assigns) do
     ~H"""
     <.center_all>
-      <h2>Game is starting</h2>
+      <h2>Game is Starting</h2>
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
