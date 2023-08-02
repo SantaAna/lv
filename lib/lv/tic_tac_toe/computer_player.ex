@@ -48,10 +48,10 @@ defmodule Lv.TicTacToe.ComputerPlayer do
       [_, %Game{draw: true}] ->
         {nil, 0}
 
-      [_, %Game{winner: :computer}] ->
+      [_, %Game{winner: :o}] ->
         {nil, 1}
 
-      [_, %Game{winner: :player}] ->
+      [_, %Game{winner: :x}] ->
         {nil, -1}
 
       # consider our moves
