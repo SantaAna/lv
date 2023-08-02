@@ -39,7 +39,7 @@ defmodule LvWeb.ConnectFour do
   end
 
   def mount(_params, _session, conn) do
-    {:ok, server} = GameServer.start(module: Lv.ConnectFour.Game, module_args: [])
+    {:ok, server} = GameServer.start(module: Lv.ConnectFour.Game, module_arg: [])
 
     {:ok,
      assign(conn,
@@ -60,7 +60,7 @@ defmodule LvWeb.ConnectFour do
   end
 
   def handle_event("play-again", _params, conn) do
-    {:ok, server} = GameServer.start([module: Lv.ConnectFour.Game, module_args: []])
+    {:ok, server} = GameServer.start([module: Lv.ConnectFour.Game, module_arg: []])
 
     {:noreply,
      assign(conn,

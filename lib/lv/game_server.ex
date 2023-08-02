@@ -34,12 +34,11 @@ defmodule Lv.GameServer do
   def release(pid) do
     GenServer.stop(pid, :shutdown)
   end
-
   # server side
   @impl true
   def init(opts) do
     {:ok,
-     %{game: opts[:module].new(opts[:module_args]), player1_pid: nil, player2_pid: nil, player: opts[:player]}}
+     %{game: opts[:module].new(opts[:module_arg]), player1_pid: nil, player2_pid: nil, player: opts[:player]}}
   end
 
   @impl true

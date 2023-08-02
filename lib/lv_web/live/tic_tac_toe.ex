@@ -38,7 +38,7 @@ defmodule LvWeb.TicTacToe do
   end
 
   def mount(_params, _session, socket) do
-    {:ok, server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_args: [])
+    {:ok, server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_arg: [])
 
     {:ok,
      assign(socket,
@@ -174,7 +174,7 @@ defmodule LvWeb.TicTacToe do
 
   def handle_event("play-again", _params, socket) do
     Lv.GameServer.release(socket.assigns.server)
-    {:ok, new_server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_args: [])
+    {:ok, new_server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_arg: [])
     {:noreply, assign(socket, game: Lv.GameServer.get_game(new_server), server: new_server)}
   end
 
