@@ -20,7 +20,7 @@ defmodule LvWeb.ConnectFourLaunch do
     ~H"""
     <h1 class="text-4xl mb-3"> Start Playing </h1>
     <p> 
-      You can join an existing lobby from the list below, play agaisnt the comptuer, or create your own lobby!
+      You can join an existing lobby from the list below, play against the comptuer, or create your own lobby!
     </p>
     <div class="flex flex-col mt-3 mb-5">
       <h1 class="text-2xl mb-3 text-center"> Play Connect Four </h1>

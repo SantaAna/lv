@@ -60,11 +60,11 @@ defmodule LvWeb.ConnectFour do
   end
 
   def handle_event("play-again", _params, conn) do
-    {:ok, server} = GameServer.start()
+    {:ok, server} = GameServer.start([module: Lv.ConnectFour.Game, module_args: []])
 
     {:noreply,
      assign(conn,
-       game: Game.new(computer_difficulty: :perfect),
+       game: GameServer.get_game(server),
        server: server
      )}
   end
@@ -88,12 +88,12 @@ defmodule LvWeb.ConnectFour do
 
   def handle_event("kill-lobby", _params, socket) do
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
-    {:noreply, push_navigate(socket, to: ~p"/connectfour_launch")}
+    {:noreply, push_navigate(socket, to: ~p"/")}
   end
 
   def handle_event("resign", _parmas, socket) do
     GameServer.resign_game(socket.assigns.server, self())
-    {:noreply, push_navigate(socket, to: ~p"/connectfour_launch")}
+    {:noreply, push_navigate(socket, to: ~p"/")}
   end
 
   # gen server functions

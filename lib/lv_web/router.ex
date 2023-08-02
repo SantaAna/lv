@@ -20,9 +20,9 @@ defmodule LvWeb.Router do
     # live "/", HomeLive
     # live "/guess", WrongLive
     # live "/rps", RockPaperScissors
-    # live "/ttt", TicTacToe
+    live "/ttt", TicTacToe
     # live "/wordle", Wordle
-    # live "/connectfour", ConnectFour
+    live "/connectfour", ConnectFour
     live "/", ConnectFourLaunch
   end
 

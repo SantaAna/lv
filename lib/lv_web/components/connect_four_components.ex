@@ -46,7 +46,7 @@ defmodule LvWeb.ConnectFourComponents do
       <div class="flex flex-row justify-center">
         <%= render_slot(@inner_block) %>
       </div>
-      <.link navigate={~p"/connectfour_launch"}>
+      <.link navigate={~p"/"}>
         <.link_button>
           Return to Lobby
         </.link_button>
@@ -94,7 +94,7 @@ defmodule LvWeb.ConnectFourComponents do
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
-      <.link navigate={~p"/connectfour_launch"}>
+      <.link navigate={~p"/"}>
         <.link_button>
           Return to Lobby
         </.link_button>

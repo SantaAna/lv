@@ -76,7 +76,7 @@ defmodule LvWeb.TicTacToe do
             </h2>
             <h3>Your Opponent Resigned</h3>
             <.board game={@game} interact={false} />
-            <.link navigate={~p"/connectfour_launch"}>
+            <.link navigate={~p"/"}>
               <.link_button>
                 Return to Lobby
               </.link_button>
@@ -95,7 +95,7 @@ defmodule LvWeb.TicTacToe do
                 </h2>
             <% end %>
             <.board game={@game} interact={false} />
-            <.link navigate={~p"/connectfour_launch"}>
+            <.link navigate={~p"/"}>
               <.link_button>
                 Return to Lobby
               </.link_button>
@@ -198,12 +198,20 @@ defmodule LvWeb.TicTacToe do
 
   def handle_event("kill-lobby", _params, socket) do
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
-    {:noreply, push_navigate(socket, to: ~p"/connectfour_launch")}
+    {:noreply, push_navigate(socket, to: ~p"/")}
   end
 
   def handle_event("resign", _parmas, socket) do
     GameServer.resign_game(socket.assigns.server, self())
-    {:noreply, push_navigate(socket, to: ~p"/connectfour_launch")}
+    {:noreply, push_navigate(socket, to: ~p"/")}
+  end
+
+  def terminate(_reason, socket) do
+    if socket.assigns.state in ["started", "opponent-move", "your-move"],
+      do: GameServer.resign_game(socket.assigns.server, self())
+
+    if socket.assigns.state == "waiting",
+      do: PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
   end
 
   # gen server functions
