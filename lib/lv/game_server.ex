@@ -4,7 +4,6 @@ defmodule Lv.GameServer do
 
   # client side
   def start(opts \\ []) do
-    opts = Keyword.put_new(opts, :computer_difficulty, :perfect)
     GenServer.start(__MODULE__, opts)
   end
 
