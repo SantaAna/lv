@@ -11,7 +11,7 @@
       <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={false} />
     </.multiplayer_opp_turn>
   <% ["your-move", true] -> %>
-    <.multiplayer_your_turn>
+    <.multiplayer_your_turn turn_timer={@turn_timer}>
       <.connect_four_board cols={Game.get_cols(@game)} state={@state} interact={true} />
     </.multiplayer_your_turn>
   <% ["opp-resigned", true] -> %>

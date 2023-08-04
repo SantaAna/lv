@@ -108,7 +108,10 @@ defmodule LvWeb.ConnectFourComponents do
   def multiplayer_your_turn(assigns) do
     ~H"""
     <.center_all>
-      <h2>Make Your Move</h2>
+      <div class="flex w-1/2 mx-auto justify-evenly attentionGreen rounded-md">
+        <h2>Make Your Move</h2>
+        <h2> Seconds Left: <%= @turn_timer %> </h2> 
+      </div>
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
@@ -171,7 +174,7 @@ defmodule LvWeb.ConnectFourComponents do
 
   def connect_four_board(assigns) do
     ~H"""
-    <div class="flex flex-row-reverse border-yellow-400 border-4 rounded-md w-min">
+    <div class="flex flex-row-reverse border-yellow-400 border-4 rounded-md w-min mt-3">
       <.connect_four_row
         :for={{col, col_num} <- @cols}
         col={col}
