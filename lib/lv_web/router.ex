@@ -17,13 +17,13 @@ defmodule LvWeb.Router do
   scope "/", LvWeb do
     pipe_through :browser
 
-    live "/", HomeLive
-    live "/guess", WrongLive
-    live "/rps", RockPaperScissors
+    # live "/", HomeLive
+    # live "/guess", WrongLive
+    # live "/rps", RockPaperScissors
     live "/ttt", TicTacToe
-    live "/wordle", Wordle
+    # live "/wordle", Wordle
     live "/connectfour", ConnectFour
-    live "/connectfour_launch", ConnectFourLaunch
+    live "/", ConnectFourLaunch
   end
 
   # Other scopes may use custom stacks.

@@ -3,12 +3,12 @@ defmodule Lv.ConnectFour.Game do
   defstruct [:board, :computer_difficulty, winner: nil, draw: false]
   @type t :: %__MODULE__{board: Board.t(), winner: atom, draw: boolean}
 
-  @game_name :connect_four
+
 
   def new(opts \\ []) do
     opts =
       opts
-      |> Keyword.put_new(:computer_difficulty, :random)
+      |> Keyword.put_new(:computer_difficulty, :perfect)
 
     %__MODULE__{
       board: Board.new(),

@@ -46,7 +46,7 @@ defmodule LvWeb.ConnectFourComponents do
       <div class="flex flex-row justify-center">
         <%= render_slot(@inner_block) %>
       </div>
-      <.link navigate={~p"/connectfour_launch"}>
+      <.link navigate={~p"/"}>
         <.link_button>
           Return to Lobby
         </.link_button>
@@ -55,19 +55,19 @@ defmodule LvWeb.ConnectFourComponents do
     """
   end
 
-  slot :inner_block, required: true
-  attr :rest, :global
+  # slot :inner_block, required: true
+  # attr :rest, :global
 
-  def link_button(assigns) do
-    ~H"""
-    <button
-      class="rounded-md m-3 px-3 py-3 text-gray-50 bg-black font-bold cursor-pointer tracking-wider hover:bg-gray-700 transition-all"
-      {@rest}
-    >
-      <%= render_slot(@inner_block) %>
-    </button>
-    """
-  end
+  # def link_button(assigns) do
+  #   ~H"""
+  #   <button
+  #     class="rounded-md m-3 px-3 py-3 text-gray-50 bg-black font-bold cursor-pointer tracking-wider hover:bg-gray-700 transition-all"
+  #     {@rest}
+  #   >
+  #     <%= render_slot(@inner_block) %>
+  #   </button>
+  #   """
+  # end
 
   def pick_banner(assigns) do
     ~H"""
@@ -94,7 +94,7 @@ defmodule LvWeb.ConnectFourComponents do
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
-      <.link navigate={~p"/connectfour_launch"}>
+      <.link navigate={~p"/"}>
         <.link_button>
           Return to Lobby
         </.link_button>
@@ -108,7 +108,10 @@ defmodule LvWeb.ConnectFourComponents do
   def multiplayer_your_turn(assigns) do
     ~H"""
     <.center_all>
-      <h2>Make Your Move</h2>
+      <div class="flex w-1/2 mx-auto justify-evenly attentionGreen rounded-md">
+        <h2>Make Your Move</h2>
+        <h2> Seconds Left: <%= @turn_timer %> </h2> 
+      </div>
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
@@ -161,7 +164,7 @@ defmodule LvWeb.ConnectFourComponents do
   def multiplayer_start(assigns) do
     ~H"""
     <.center_all>
-      <h2>Game is starting</h2>
+      <h2>Game is Starting</h2>
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
@@ -171,7 +174,7 @@ defmodule LvWeb.ConnectFourComponents do
 
   def connect_four_board(assigns) do
     ~H"""
-    <div class="flex flex-row-reverse border-yellow-400 border-4 rounded-md w-min">
+    <div class="flex flex-row-reverse border-yellow-400 border-4 rounded-md w-min mt-3">
       <.connect_four_row
         :for={{col, col_num} <- @cols}
         col={col}

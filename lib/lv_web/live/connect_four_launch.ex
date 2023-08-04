@@ -3,6 +3,11 @@ defmodule LvWeb.ConnectFourLaunch do
   alias Phoenix.PubSub
   alias Lv.LobbyServer 
 
+  @alias_to_game_module %{
+    "connectfour" => [Lv.ConnectFour.Game, LvWeb.ConnectFour, "connectfour"],
+    "tictactoe" => [Lv.TicTacToe.Game, LvWeb.TicTacToe, "ttt"]
+  }
+
   def mount(_params, _session, socket) do
     PubSub.subscribe(Lv.PubSub, "lobbies")
     lobbies = LobbyServer.list_games() 
@@ -13,14 +18,31 @@ defmodule LvWeb.ConnectFourLaunch do
 
   def render(assigns) do
     ~H"""
-    <div class="flex flex-row justify-evenly">
-      <.link navigate={~p"/connectfour"}> 
-      <button>Play Against Computer</button>
-      </.link>
-      <button phx-click="create-lobby">
-        Create Lobby
-      </button>
+    <h1 class="text-4xl mb-3"> Start Playing </h1>
+    <p> 
+      You can join an existing lobby from the list below, play against the comptuer, or create your own lobby!
+    </p>
+    <div class="flex flex-col mt-3 mb-5">
+      <h1 class="text-2xl mb-3 text-center"> Play Connect Four </h1>
+      <div class="flex flex-row justify-evenly">
+        <.link navigate={~p"/connectfour"}> 
+        <.link_button>Play Connect Four Against Computer</.link_button>
+        </.link>
+        <.link_button phx-click="create-lobby" phx-value-game="connectfour">
+          Create Connect Four Lobby
+        </.link_button>
+      </div>
+      <h1 class="text-2xl mb-3 text-center mt-6"> Play TicTacToe </h1>
+      <div class="flex flex-row justify-evenly">
+        <.link navigate={~p"/ttt"}> 
+        <.link_button>Play TicTacToe Against Computer</.link_button>
+        </.link>
+        <.link_button phx-click="create-lobby" phx-value-game="tictactoe">
+          Create TicTacToe Lobby
+        </.link_button>
+      </div>
     </div>
+    <h1 class="text-2xl mb-3 text-center mt-6"> Lobbies </h1>
     <div class="flex flex-col gap-5">
       <.lobby :for={lobby <- @lobbies} lobby={lobby} />
     </div>
@@ -29,13 +51,13 @@ defmodule LvWeb.ConnectFourLaunch do
 
   def lobby(assigns) do
     ~H"""
-    <div class="flex flex-row gap-2">
-      <div>
-        <%= @lobby.id %>
+    <div class="flex flex-row gap-2 items-center">
+      <div class="text-lg">
+        <%= @lobby.game %>
       </div>
-      <button phx-click="join" phx-value-id={@lobby.id}>
+      <.link_button phx-click="join" phx-value-id={@lobby.id} phx-value-game={@lobby.game}>
       Join
-      </button>
+      </.link_button>
     </div>
     """
   end
@@ -47,18 +69,20 @@ defmodule LvWeb.ConnectFourLaunch do
   end
 
   def handle_info({:delete, {:id, lobby_id}}, socket) do
-    {:noreply, assign(socket, lobbies: Enum.reject(socket.assigns.lobbies, & &1 == lobby_id))} 
+    {:noreply, assign(socket, lobbies: Enum.reject(socket.assigns.lobbies, & &1.id == lobby_id))} 
   end
 
-  def handle_event("join", %{"id" => id}, socket) do
-    {:noreply, push_navigate(socket, to: ~p"/connectfour?#{[lobby_id: id, state: "joined"]}")}
+  def handle_event("join", %{"id" => id, "game" => game}, socket) do
+    [_, _ , path] = @alias_to_game_module[game]
+    {:noreply, push_navigate(socket, to: ~p"/#{path}?#{[lobby_id: id, state: "joined"]}")}
   end
 
-  def handle_event("create-lobby", _params, socket) do
+  def handle_event("create-lobby", %{"game" => game_name}, socket) do
+      [server_mod, player_mod, path] = @alias_to_game_module[game_name]
      id = LobbyServer.get_id()
-     PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: Lv.ConnectFour.Game}})
+     PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: server_mod, player: player_mod}})
 
-     {:noreply, push_navigate(socket, to: ~p"/connectfour?#{[lobby_id: id, state: "waiting"]}")}
+     {:noreply, push_navigate(socket, to: ~p"/#{path}?#{[lobby_id: id, state: "waiting"]}")}
   end
 
 end

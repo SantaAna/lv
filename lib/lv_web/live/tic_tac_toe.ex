@@ -1,9 +1,53 @@
 defmodule LvWeb.TicTacToe do
   use LvWeb, :live_view
-  alias Lv.TicTacToe.{Board, Game, ComputerPlayer, ComputerMoveServer}
+  alias Phoenix.PubSub
+  alias Lv.LobbyServer
+  alias Lv.GameServer
+  import LvWeb.ConnectFourComponents
+
+  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, socket) do
+    lobby_id = String.to_integer(lobby_id)
+    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
+    PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
+    GameServer.player_join(lobby_info.game_server, self())
+    GameServer.start_game(lobby_info.game_server)
+
+    {:ok,
+     assign(socket,
+       game: GameServer.get_game(lobby_info.game_server),
+       server: lobby_info.game_server,
+       state: "started",
+       lobby_id: lobby_id,
+       multiplayer: true
+     )}
+  end
+
+  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, _session, socket) do
+    lobby_id = String.to_integer(lobby_id)
+    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
+    GameServer.player_join(lobby_info.game_server, self())
+
+    {:ok,
+     assign(socket,
+       game: GameServer.get_game(lobby_info.game_server),
+       server: lobby_info.game_server,
+       state: "waiting",
+       lobby_id: lobby_id,
+       multiplayer: true
+     )}
+  end
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, game: Game.new())}
+    {:ok, server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_arg: [])
+
+    {:ok,
+     assign(socket,
+       server: server,
+       state: "play",
+       multiplayer: false,
+       marker: :x,
+       game: Lv.GameServer.get_game(server)
+     )}
   end
 
   def render(assigns) do
@@ -11,23 +55,72 @@ defmodule LvWeb.TicTacToe do
     <div class="flex justify-center">
       <div>
         <h1 class="text-center text-2xl mb-5">Tic-Tac-Toe</h1>
-        <h2 :if={@game.winner == :computer} class="text-red-500 text-2xl text-center mb-2">
-          Comptuer Wins!
-        </h2>
-        <h2 :if={@game.winner == :player} class="text-green-500 text-2xl text-center mb-2">
-          You Win!
-        </h2>
-        <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
-        <.board game={@game} />
-        <div class="flex justify-center">
-          <button
-            :if={@game.draw || @game.winner}
-            class="bg-black text-zinc-50 p-4 mt-5 hover:bg-gray-700"
-            phx-click="play-again"
-          >
-            Play Again
-          </button>
-        </div>
+        <%= case [@state, @multiplayer] do %>
+          <% ["waiting", true] -> %>
+            <h2>Waiting for an opponenet to Join</h2>
+            <.negative_button phx-click="kill-lobby">Leave Lobby</.negative_button>
+          <% ["started", true] -> %>
+            <h2>Game is Starting</h2>
+            <.board game={@game} interact={false} />
+          <% ["opponent-move", true] -> %>
+            <h2>Waiting for opponent to move</h2>
+            <.board game={@game} interact={false} />
+            <.negative_button phx-click="resign">Resign</.negative_button>
+          <% ["your-move", true] -> %>
+            <h2>Your Move!</h2>
+            <.board game={@game} interact={true} />
+            <.negative_button phx-click="resign">Resign</.negative_button>
+          <% ["opp-resigned", true] -> %>
+            <h2 class="text-green-500 text-2xl text-center mb-2">
+              You Win!
+            </h2>
+            <h3>Your Opponent Resigned</h3>
+            <.board game={@game} interact={false} />
+            <.link navigate={~p"/"}>
+              <.link_button>
+                Return to Lobby
+              </.link_button>
+            </.link>
+          <% ["game-over", true] -> %>
+            <%= cond do %>
+              <% @game.draw -> %>
+                <h2 class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
+              <% @game.winner == @marker  -> %>
+                <h2 class="text-green-500 text-2xl text-center mb-2">
+                  You Win!
+                </h2>
+              <% true -> %>
+                <h2 class="text-red-500 text-2xl text-center mb-2">
+                  You Lose!
+                </h2>
+            <% end %>
+            <.board game={@game} interact={false} />
+            <.link navigate={~p"/"}>
+              <.link_button>
+                Return to Lobby
+              </.link_button>
+            </.link>
+          <% [_, false] -> %>
+            <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">
+              Cat's Game!
+            </h2>
+            <h2 :if={@game.winner == :x} class="text-green-500 text-2xl text-center mb-2">
+              You Win!
+            </h2>
+                <h2 :if={@game.winner == :o} class="text-red-500 text-2xl text-center mb-2">
+                  You Lose!
+                </h2>
+            <.board game={@game} interact={!@game.winner && !@game.draw} />
+            <div class="flex justify-center">
+              <button
+                :if={@game.draw || @game.winner}
+                class="bg-black text-zinc-50 p-4 mt-5 hover:bg-gray-700"
+                phx-click="play-again"
+              >
+                Play Again
+              </button>
+            </div>
+        <% end %>
       </div>
     </div>
     """
@@ -37,7 +130,7 @@ defmodule LvWeb.TicTacToe do
     ~H"""
     <div class="grid grid-cols-3 h-52 w-52">
       <%= for x <- 1..3, y <- 1..3 do %>
-        <.board_square coord={[x, y]} game={@game} />
+        <.board_square coord={[x, y]} game={@game} interact={@interact} />
       <% end %>
     </div>
     """
@@ -47,7 +140,7 @@ defmodule LvWeb.TicTacToe do
     ~H"""
     <%= case [@game.board[@coord], @coord in @game.winning_coords] do %>
       <% [:blank, _] -> %>
-        <%= if @game.draw or @game.winner do %>
+        <%= if !@interact do %>
           <div class="p-5 text-xl border-black border-2 text-center h-full w-full text-transparent hover:bg-red-100">
             B
           </div>
@@ -82,32 +175,80 @@ defmodule LvWeb.TicTacToe do
   end
 
   def handle_event("play-again", _params, socket) do
-    {:noreply, assign(socket, winner: nil, draw: nil, game: Game.new())}
+    Lv.GameServer.release(socket.assigns.server)
+    {:ok, new_server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_arg: [])
+    {:noreply, assign(socket, game: Lv.GameServer.get_game(new_server), server: new_server)}
+  end
+
+  def handle_event(
+        "mark",
+        %{"row" => row, "col" => col},
+        %{assigns: %{multiplayer: true, marker: marker}} = conn
+      ) do
+    coords = [row, col] |> Enum.map(&String.to_integer/1)
+    game = GameServer.player_move_multi(conn.assigns.server, {coords, marker}, self())
+    IO.inspect(game.winner, label: "winner value")
+    IO.inspect(marker, label: "marker value")
+    {:noreply, assign(conn, state: "opponent-move", game: game)}
   end
 
   def handle_event("mark", %{"row" => row, "col" => col}, socket) do
     coords = [row, col] |> Enum.map(&String.to_integer/1)
+    updated_game = Lv.GameServer.player_move_single(socket.assigns.server, coords)
+    {:noreply, assign(socket, game: updated_game)}
+  end
 
-    player_game =
-      Game.mark(socket.assigns.game, coords, :x)
-      |> Game.winner()
-      |> Game.draw_check()
+  def handle_event("kill-lobby", _params, socket) do
+    PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
+    {:noreply, push_navigate(socket, to: ~p"/")}
+  end
 
-    if player_game.winner || player_game.draw do
-      {
-        :noreply,
-        assign(socket, game: player_game)
-      }
-    else
-      computer_move = ComputerMoveServer.get_move(player_game)
+  def handle_event("resign", _parmas, socket) do
+    GameServer.resign_game(socket.assigns.server, self())
+    {:noreply, push_navigate(socket, to: ~p"/")}
+  end
 
-      {:noreply,
-       assign(socket,
-         game:
-           Game.mark(player_game, computer_move, :o)
-           |> Game.winner()
-           |> Game.draw_check()
-       )}
-    end
+  def terminate(_reason, socket) do
+    if socket.assigns.state in ["started", "opponent-move", "your-move"],
+      do: GameServer.resign_game(socket.assigns.server, self())
+
+    if socket.assigns.state == "waiting",
+      do: PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
+  end
+
+  # gen server functions
+
+  # client
+  def change_state(pid, state) do
+    GenServer.cast(pid, {:change_state, state})
+  end
+
+  def take_turn(pid, game_state) do
+    GenServer.cast(pid, {:take_turn, game_state})
+  end
+
+  def set_marker(pid, color) do
+    GenServer.call(pid, {:set_marker, color})
+  end
+
+  def set_game(pid, game) do
+    GenServer.cast(pid, {:set_game, game})
+  end
+
+  # server
+  def handle_cast({:change_state, state}, socket) do
+    {:noreply, assign(socket, state: state)}
+  end
+
+  def handle_cast({:take_turn, game_state}, socket) do
+    {:noreply, assign(socket, game: game_state, state: "your-move")}
+  end
+
+  def handle_cast({:set_game, game}, socket) do
+    {:noreply, assign(socket, game: game)}
+  end
+
+  def handle_call({:set_marker, marker}, _caller, socket) do
+    {:reply, :ok, assign(socket, marker: marker)}
   end
 end

@@ -89,6 +89,20 @@ defmodule LvWeb.CoreComponents do
     """
   end
 
+  slot :inner_block, required: true
+  attr :rest, :global
+
+  def link_button(assigns) do
+    ~H"""
+    <button
+      class="rounded-md m-3 px-3 py-3 text-gray-50 bg-black font-bold cursor-pointer tracking-wider hover:bg-gray-700 transition-all"
+      {@rest}
+    >
+      <%= render_slot(@inner_block) %>
+    </button>
+    """
+  end
+
   @doc """
   Renders flash notices.
 
