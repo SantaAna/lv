@@ -34,6 +34,7 @@ defmodule Lv.GameServer do
   def release(pid) do
     GenServer.stop(pid, :shutdown)
   end
+
   # server side
   @impl true
   def init(opts) do
@@ -43,7 +44,6 @@ defmodule Lv.GameServer do
 
   @impl true
   def handle_info(:shutdown, state) do
-    Logger.info("GameServer process #{inspect(self())} stopped normally")
     {:stop, :normal, state}
   end
 
