@@ -12,7 +12,6 @@ defmodule Lv.GameServer do
   end
 
   def player_join(pid, player_pid, user_info) do
-    Logger.log(:warn, "player join called")
     GenServer.call(pid, {:add_player, player_pid, user_info})
   end
 
@@ -40,7 +39,12 @@ defmodule Lv.GameServer do
   @impl true
   def init(opts) do
     {:ok,
-     %{game: opts[:module].new(opts[:module_arg]), player1_pid: nil, player2_pid: nil, player: opts[:player]}}
+     %{
+       game: opts[:module].new(opts[:module_arg]),
+       player1_pid: nil,
+       player2_pid: nil,
+       player: opts[:player]
+     }}
   end
 
   @impl true
@@ -114,74 +118,105 @@ defmodule Lv.GameServer do
 
   @impl true
   def handle_call(:get_game, _from, %{game: game} = state) do
-    {:reply, game, state} 
+    {:reply, game, state}
   end
 
-  @impl true
-  def handle_call(
-        {:player_move_multi, {col, color}, player_pid},
-        _from,
-        %{player1_pid: player_pid, player2_pid: next_player_pid, game: game, player: player, player1_info: player_info, player2_info: next_player_info} =
-          state
-      ) do
-    updated_game =
-      Lv.Game.mark(game, col, color)
-      |> Lv.Game.win_check()
-      |> Lv.Game.draw_check()
 
-    cond do
-      Lv.Game.winner?(updated_game) || Lv.Game.draw?(updated_game) ->
-        player.change_state(player_pid, "game-over")
-        player.change_state(next_player_pid, "game-over")
-        player.set_game(next_player_pid, updated_game)
-        Lv.Matches.record_match_result(player_info.id, next_player_info.id, Lv.Game.name(updated_game), Lv.Game.draw?(updated_game))
-        Process.send_after(self(), :shutdown, 1000)
-        {:reply, updated_game, Map.put(state, :game, updated_game)}
+  def handle_call({:player_move_multi, _, _} = message, _from, state) do
+    state =
+      state
+      |> whose_turn(message)
+      |> mark_and_check(message)
+      |> execute_if(&game_over?/1, &game_over_updates/1)
+      |> execute_if(&(not game_over?(&1)), &game_continue_updates/1)
+      |> execute_if(&game_over?/1, &schedule_kill/1)
 
-      true ->
-        player.take_turn(next_player_pid, updated_game)
-        {:reply, updated_game, Map.put(state, :game, updated_game)}
+    {:reply, state.game, state}
+  end
+
+  @spec execute_if(term, (term -> boolean), (term -> term)) :: term
+  defp execute_if(arg, con, fun) do
+    if con.(arg) do
+      fun.(arg)
+    else
+      arg
     end
   end
 
-  def handle_call(
-        {:player_move_multi, {col, color}, player_pid},
-        _from,
-        %{player1_pid: next_player_pid, player2_pid: player_pid, game: game, player: player, player2_info: player_info, player1_info: next_player_info} =
-          state
-      ) do
-    updated_game =
-      Lv.Game.mark(game, col, color)
+  defp schedule_kill(state) do
+    Process.send_after(self(), :shutdown, 1000)
+    state
+  end
+
+  defp game_continue_updates(state) do
+    state.player.take_turn(state.next_player_pid, state.game)
+    state
+  end
+
+  @spec game_over?(map) :: boolean
+  defp game_over?(state) do
+    Lv.Game.winner?(state.game) || Lv.Game.draw?(state.game)
+  end
+
+  defp game_over_updates(state) do
+    state.player.change_state(state.player_pid, "game-over")
+    state.player.change_state(state.next_player_pid, "game-over")
+    state.player.set_game(state.next_player_pid, state.game)
+
+    Lv.Matches.record_match_result(
+      state.player_info.id,
+      state.next_player_info.id,
+      Lv.Game.name(state.game),
+      Lv.Game.draw?(state.game)
+    )
+
+    state
+  end
+
+  @spec mark_and_check(map, tuple) :: map
+  defp mark_and_check(state, {_, {spot, marker}, _}) do
+    Map.update!(state, :game, fn game ->
+      game
+      |> Lv.Game.mark(spot, marker)
       |> Lv.Game.win_check()
       |> Lv.Game.draw_check()
+    end)
+  end
 
-    cond do
-      Lv.Game.winner?(updated_game) || Lv.Game.draw?(updated_game) ->
-        player.change_state(player_pid, "game-over")
-        player.change_state(next_player_pid, "game-over")
-        player.set_game(next_player_pid, updated_game)
-        Lv.Matches.record_match_result(player_info.id, next_player_info.id, Lv.Game.name(updated_game), Lv.Game.draw?(updated_game))
-        Process.send_after(self(), :shutdown, 1000)
-        {:reply, updated_game, Map.put(state, :game, updated_game)}
-
-      true ->
-        player.take_turn(next_player_pid, updated_game)
-        {:reply, updated_game, Map.put(state, :game, updated_game)}
+  @spec whose_turn(map, tuple) :: map
+  defp whose_turn(state, {_, _, player_pid}) do
+    if state.player1_pid == player_pid do
+      state
+      |> Map.put(:next_player_pid, state.player2_pid)
+      |> Map.put(:player_pid, state.player1_pid)
+      |> Map.put(:player_info, state.player1_info)
+      |> Map.put(:next_player_info, state.player2_info)
+    else
+      state
+      |> Map.put(:next_player_pid, state.player1_pid)
+      |> Map.put(:player_pid, state.player2_pid)
+      |> Map.put(:player_info, state.player2_info)
+      |> Map.put(:next_player_info, state.player1_info)
     end
   end
+
 
   @impl true
   def handle_call({:add_player, player_pid, user_info}, _, %{player1_pid: nil} = state) do
-    state = state
-          |> Map.put(:player1_pid, player_pid)
-          |> Map.put(:player1_info, user_info)
+    state =
+      state
+      |> Map.put(:player1_pid, player_pid)
+      |> Map.put(:player1_info, user_info)
+
     {:reply, :ok, state}
   end
 
   def handle_call({:add_player, player_pid, user_info}, _, %{player2_pid: nil} = state) do
-    state = state
-          |> Map.put(:player2_pid, player_pid)
-          |> Map.put(:player2_info, user_info)
+    state =
+      state
+      |> Map.put(:player2_pid, player_pid)
+      |> Map.put(:player2_info, user_info)
+
     {:reply, :ok, state}
   end
 
