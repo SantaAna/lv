@@ -57,22 +57,13 @@ defmodule Lv.GameServer do
         :first_turn,
         %{player1_pid: p1_pid, player2_pid: p2_pid, game: game, player: player} = state
       ) do
-    first_player = Enum.random([:player1_pid, :player2_pid])
+    [first_player_pid, second_player_pid] = Enum.shuffle([p1_pid, p2_pid])
     [first_marker, second_marker] = Lv.Game.markers(game)
 
-    case first_player do
-      :player1_pid ->
-        player.set_marker(p1_pid, first_marker)
-        player.set_marker(p2_pid, second_marker)
-        player.change_state(p2_pid, "opponent-move")
-        player.take_turn(p1_pid, game)
-
-      :player2_pid ->
-        player.set_marker(p1_pid, second_marker)
-        player.set_marker(p2_pid, first_marker)
-        player.change_state(p1_pid, "opponent-move")
-        player.take_turn(p2_pid, game)
-    end
+    player.set_marker(first_player_pid, first_marker)
+    player.set_marker(second_player_pid, second_marker)
+    player.change_state(second_player_pid, "opponent-move")
+    player.take_turn(first_player_pid, game)
 
     {:noreply, state}
   end
@@ -120,7 +111,6 @@ defmodule Lv.GameServer do
   def handle_call(:get_game, _from, %{game: game} = state) do
     {:reply, game, state}
   end
-
 
   def handle_call({:player_move_multi, _, _} = message, _from, state) do
     state =
@@ -199,7 +189,6 @@ defmodule Lv.GameServer do
       |> Map.put(:next_player_info, state.player1_info)
     end
   end
-
 
   @impl true
   def handle_call({:add_player, player_pid, user_info}, _, %{player1_pid: nil} = state) do
