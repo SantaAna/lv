@@ -11,8 +11,9 @@ defmodule Lv.GameServer do
     GenServer.call(pid, :get_game)
   end
 
-  def player_join(pid, player_pid) do
-    GenServer.call(pid, {:add_player, player_pid})
+  def player_join(pid, player_pid, user_info) do
+    Logger.log(:warn, "player join called")
+    GenServer.call(pid, {:add_player, player_pid, user_info})
   end
 
   def start_game(pid) do
@@ -120,7 +121,7 @@ defmodule Lv.GameServer do
   def handle_call(
         {:player_move_multi, {col, color}, player_pid},
         _from,
-        %{player1_pid: player_pid, player2_pid: next_player_pid, game: game, player: player} =
+        %{player1_pid: player_pid, player2_pid: next_player_pid, game: game, player: player, player1_info: player_info, player2_info: next_player_info} =
           state
       ) do
     updated_game =
@@ -133,6 +134,7 @@ defmodule Lv.GameServer do
         player.change_state(player_pid, "game-over")
         player.change_state(next_player_pid, "game-over")
         player.set_game(next_player_pid, updated_game)
+        Lv.Matches.record_match_result(player_info.id, next_player_info.id, Lv.Game.name(updated_game), Lv.Game.draw?(updated_game))
         Process.send_after(self(), :shutdown, 1000)
         {:reply, updated_game, Map.put(state, :game, updated_game)}
 
@@ -145,7 +147,7 @@ defmodule Lv.GameServer do
   def handle_call(
         {:player_move_multi, {col, color}, player_pid},
         _from,
-        %{player1_pid: next_player_pid, player2_pid: player_pid, game: game, player: player} =
+        %{player1_pid: next_player_pid, player2_pid: player_pid, game: game, player: player, player2_info: player_info, player1_info: next_player_info} =
           state
       ) do
     updated_game =
@@ -158,6 +160,7 @@ defmodule Lv.GameServer do
         player.change_state(player_pid, "game-over")
         player.change_state(next_player_pid, "game-over")
         player.set_game(next_player_pid, updated_game)
+        Lv.Matches.record_match_result(player_info.id, next_player_info.id, Lv.Game.name(updated_game), Lv.Game.draw?(updated_game))
         Process.send_after(self(), :shutdown, 1000)
         {:reply, updated_game, Map.put(state, :game, updated_game)}
 
@@ -168,12 +171,18 @@ defmodule Lv.GameServer do
   end
 
   @impl true
-  def handle_call({:add_player, player_pid}, _, %{player1_pid: nil} = state) do
-    {:reply, :ok, Map.put(state, :player1_pid, player_pid)}
+  def handle_call({:add_player, player_pid, user_info}, _, %{player1_pid: nil} = state) do
+    state = state
+          |> Map.put(:player1_pid, player_pid)
+          |> Map.put(:player1_info, user_info)
+    {:reply, :ok, state}
   end
 
-  def handle_call({:add_player, player_pid}, _, %{player2_pid: nil} = state) do
-    {:reply, :ok, Map.put(state, :player2_pid, player_pid)}
+  def handle_call({:add_player, player_pid, user_info}, _, %{player2_pid: nil} = state) do
+    state = state
+          |> Map.put(:player2_pid, player_pid)
+          |> Map.put(:player2_info, user_info)
+    {:reply, :ok, state}
   end
 
   def handle_call({:add_player, _}, _, state) do
