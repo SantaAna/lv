@@ -65,6 +65,26 @@ defmodule Lv.Matches do
     })
   end
 
+  def matches_played_by_user(user_id) do
+    q =
+      from m in Match,
+        join: w in "users",
+        on: w.id == m.winner,
+        join: l in "users",
+        on: l.id == m.loser,
+        where: m.winner == ^user_id or m.loser == ^user_id,
+        select: %{
+          winner_id: m.winner,
+          winner_name: w.username,
+          loser_id: m.loser,
+          loser_name: l.username,
+          game: m.game,
+          draw: m.draw
+        }
+
+    Repo.all(q)
+  end
+
   @doc """
   Updates a match.
 
