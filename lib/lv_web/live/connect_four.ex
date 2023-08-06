@@ -9,9 +9,7 @@ defmodule LvWeb.ConnectFour do
   @turn_time 60
 
   def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, conn) do
-    IO.puts("second player mount called")
     user = Lv.Accounts.get_user_by_session_token(session["user_token"])
-    IO.inspect(user, label: "logged in user")
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
 
@@ -34,9 +32,7 @@ defmodule LvWeb.ConnectFour do
   end
 
   def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, session, conn) do
-    IO.puts("first player mount called.")
     user = Lv.Accounts.get_user_by_session_token(session["user_token"])
-    IO.inspect(user, label: "logged in user")
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
 
