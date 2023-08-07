@@ -73,6 +73,7 @@ defmodule Lv.Matches do
         join: l in "users",
         on: l.id == m.loser,
         where: m.winner == ^user_id or m.loser == ^user_id,
+        order_by: m.inserted_at,
         select: %{
           winner_id: m.winner,
           winner_name: w.username,

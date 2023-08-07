@@ -39,7 +39,10 @@ defmodule LvWeb.UserGameHistory do
 
   def render(assigns) do
     ~H"""
-    <.header> Your Match History </.header>
+    <.header> 
+    Your Match History 
+    <:subtitle> Ordered newest to oldest </:subtitle>
+    </.header>
     <%=if @loading do %>
       <h2>Loading Match Results</h2>
     <% else %>
