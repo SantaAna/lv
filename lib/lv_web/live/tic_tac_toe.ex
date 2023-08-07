@@ -5,12 +5,16 @@ defmodule LvWeb.TicTacToe do
   alias Lv.GameServer
   import LvWeb.ConnectFourComponents
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, socket) do
+  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, socket) do
+    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
-    PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
-    GameServer.player_join(lobby_info.game_server, self())
-    GameServer.start_game(lobby_info.game_server)
+
+    if connected?(socket) do
+      PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
+      GameServer.player_join(lobby_info.game_server, self(), user)
+      GameServer.start_game(lobby_info.game_server)
+    end
 
     {:ok,
      assign(socket,
@@ -22,10 +26,11 @@ defmodule LvWeb.TicTacToe do
      )}
   end
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, _session, socket) do
+  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, session, socket) do
+    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
-    GameServer.player_join(lobby_info.game_server, self())
+    if connected?(socket), do: GameServer.player_join(lobby_info.game_server, self(), user)
 
     {:ok,
      assign(socket,
@@ -107,9 +112,9 @@ defmodule LvWeb.TicTacToe do
             <h2 :if={@game.winner == :x} class="text-green-500 text-2xl text-center mb-2">
               You Win!
             </h2>
-                <h2 :if={@game.winner == :o} class="text-red-500 text-2xl text-center mb-2">
-                  You Lose!
-                </h2>
+            <h2 :if={@game.winner == :o} class="text-red-500 text-2xl text-center mb-2">
+              You Lose!
+            </h2>
             <.board game={@game} interact={!@game.winner && !@game.draw} />
             <div class="flex justify-center">
               <button
