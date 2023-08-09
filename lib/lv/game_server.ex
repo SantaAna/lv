@@ -1,6 +1,7 @@
 defmodule Lv.GameServer do
   use GenServer
   require Logger
+  alias Phoenix.PubSub
 
   # client side
   def start(opts \\ []) do
@@ -159,6 +160,7 @@ defmodule Lv.GameServer do
       Lv.Game.name(state.game),
       Lv.Game.draw?(state.game)
     )
+    PubSub.broadcast(Lv.PubSub, "match_results", {:match_result, %{draw: Lv.Game.draw?(state.game), game: Lv.Game.name(state.game), winner_id: state.player_info.id, loser_id: state.next_player_info.id}})
 
     state
   end

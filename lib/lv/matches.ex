@@ -65,6 +65,27 @@ defmodule Lv.Matches do
     })
   end
 
+  def recent_matches(match_count) do
+    q =
+      from m in Match,
+        join: w in "users",
+        on: w.id == m.winner,
+        join: l in "users",
+        on: l.id == m.loser,
+        order_by: [desc: m.inserted_at],
+        limit: ^match_count,
+        select: %{
+          winner_id: m.winner,
+          winner_name: w.username,
+          loser_id: m.loser,
+          loser_name: l.username,
+          game: m.game,
+          draw: m.draw
+        }
+
+    Repo.all(q)
+  end
+
   def matches_played_by_user(user_id) do
     q =
       from m in Match,
