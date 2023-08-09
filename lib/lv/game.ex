@@ -28,11 +28,11 @@ defimpl Lv.Game, for: Lv.ConnectFour.Game do
   end
 
   def winner?(game) do
-    game.winner
+    if game.winner, do: true, else: false
   end
 
   def draw?(game) do
-    game.draw
+    if game.draw, do: true, else: false
   end
 
   def markers(_game) do
@@ -61,11 +61,11 @@ defimpl Lv.Game, for: Lv.TicTacToe.Game do
   end
 
   def winner?(game) do
-    game.winner
+    if game.winner, do: true, else: false
   end
 
   def draw?(game) do
-    game.draw
+    if game.draw, do: true, else: false
   end
 
   def markers(_game) do
