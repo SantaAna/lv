@@ -8,12 +8,16 @@ defmodule LvWeb.ConnectFour do
 
   @turn_time 60
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do
+  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, conn) do
+    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
-    PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
-    GameServer.player_join(lobby_info.game_server, self())
-    GameServer.start_game(lobby_info.game_server)
+
+    if connected?(conn) do
+      PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
+      GameServer.player_join(lobby_info.game_server, self(), user)
+      GameServer.start_game(lobby_info.game_server)
+    end
 
     {:ok,
      assign(conn,
@@ -23,14 +27,16 @@ defmodule LvWeb.ConnectFour do
        lobby_id: lobby_id,
        multiplayer: true,
        turn_count: 0,
-       turn_timer: @turn_time 
+       turn_timer: @turn_time
      )}
   end
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, _session, conn) do
+  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, session, conn) do
+    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
-    GameServer.player_join(lobby_info.game_server, self())
+
+    if connected?(conn), do: GameServer.player_join(lobby_info.game_server, self(), user)
 
     {:ok,
      assign(conn,
@@ -66,7 +72,7 @@ defmodule LvWeb.ConnectFour do
   end
 
   def handle_event("play-again", _params, conn) do
-    {:ok, server} = GameServer.start([module: Lv.ConnectFour.Game, module_arg: []])
+    {:ok, server} = GameServer.start(module: Lv.ConnectFour.Game, module_arg: [])
 
     {:noreply,
      assign(conn,
@@ -82,7 +88,14 @@ defmodule LvWeb.ConnectFour do
       ) do
     play = String.to_integer(col)
     game = GameServer.player_move_multi(conn.assigns.server, {play, color}, self())
-    {:noreply, assign(conn, state: "opponent-move", game: game, turn_timer: @turn_time, turn_count: conn.assigns.turn_count + 1)}
+
+    {:noreply,
+     assign(conn,
+       state: "opponent-move",
+       game: game,
+       turn_timer: @turn_time,
+       turn_count: conn.assigns.turn_count + 1
+     )}
   end
 
   def handle_event("drop-piece", %{"col" => col}, conn) do
@@ -126,12 +139,10 @@ defmodule LvWeb.ConnectFour do
     {:noreply, assign(socket, state: state)}
   end
 
-
   def handle_cast({:take_turn, game_state}, socket) do
     Process.send_after(self(), {:turn_tick, socket.assigns.turn_count}, 1000)
     {:noreply, assign(socket, game: game_state, state: "your-move")}
   end
-
 
   def handle_cast({:set_game, game}, socket) do
     {:noreply, assign(socket, game: game)}
@@ -141,19 +152,31 @@ defmodule LvWeb.ConnectFour do
     {:reply, :ok, assign(socket, color: color)}
   end
 
-
-  def handle_info({:turn_tick, turn_count}, %{assigns: %{turn_count: turn_count, turn_timer: turn_timer}} = socket) when turn_timer > 0 do
+  def handle_info(
+        {:turn_tick, turn_count},
+        %{assigns: %{turn_count: turn_count, turn_timer: turn_timer}} = socket
+      )
+      when turn_timer > 0 do
     Process.send_after(self(), {:turn_tick, turn_count}, 1000)
-    {:noreply, assign(socket, turn_timer: turn_timer - 1)}    
+    {:noreply, assign(socket, turn_timer: turn_timer - 1)}
   end
 
-  def handle_info({:turn_tick, turn_count}, %{assigns: %{turn_count: turn_count, game: game, server: server, color: color}} = conn) do
-
+  def handle_info(
+        {:turn_tick, turn_count},
+        %{assigns: %{turn_count: turn_count, game: game, server: server, color: color}} = conn
+      ) do
     IO.inspect(is_integer(conn.assigns.turn_timer), label: "timer an integer?: ")
     IO.inspect(conn.assigns.turn_timer, label: "turn timer value at random choice.")
     play = Lv.Game.random_move(game)
     game = GameServer.player_move_multi(server, {play, color}, self())
-    {:noreply, assign(conn, state: "opponent-move", game: game, turn_timer: @turn_time, turn_count: turn_count + 1)}
+
+    {:noreply,
+     assign(conn,
+       state: "opponent-move",
+       game: game,
+       turn_timer: @turn_time,
+       turn_count: turn_count + 1
+     )}
   end
 
   def handle_info({:turn_tick, _}, socket), do: {:noreply, socket}
