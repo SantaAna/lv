@@ -21,7 +21,8 @@ defmodule Lv.Application do
       # Start a worker by calling: Lv.Worker.start_link(arg)
       # {Lv.Worker, arg}
       {Lv.TicTacToe.ComputerMoveServer, []},
-      {Lv.LobbyServer, []}
+      {Lv.LobbyServer, []},
+      {Lv.MatchCache, []}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
