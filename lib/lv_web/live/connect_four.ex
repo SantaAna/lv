@@ -7,8 +7,9 @@ defmodule LvWeb.ConnectFour do
   alias Phoenix.PubSub
 
   @turn_time 60
-
-  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, conn) do
+  #TODO: refactor to use marker instead of color
+  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, conn) do
+    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
@@ -147,10 +148,10 @@ defmodule LvWeb.ConnectFour do
     {:noreply, assign(socket, turn_timer: turn_timer - 1)}    
   end
 
-  def handle_info({:turn_tick, turn_count}, %{assigns: %{turn_count: turn_count, game: game, server: server, color: color}} = conn) do
-
-    IO.inspect(is_integer(conn.assigns.turn_timer), label: "timer an integer?: ")
-    IO.inspect(conn.assigns.turn_timer, label: "turn timer value at random choice.")
+  def handle_info(
+        {:turn_tick, turn_count},
+        %{assigns: %{turn_count: turn_count, game: game, server: server, color: color}} = conn
+      ) do
     play = Lv.Game.random_move(game)
     game = GameServer.player_move_multi(server, {play, color}, self())
     {:noreply, assign(conn, state: "opponent-move", game: game, turn_timer: @turn_time, turn_count: turn_count + 1)}

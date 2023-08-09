@@ -5,7 +5,10 @@ defmodule LvWeb.TicTacToe do
   alias Lv.GameServer
   import LvWeb.ConnectFourComponents
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, _session, socket) do
+  @turn_time 10
+
+  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, socket) do
+    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
     lobby_id = String.to_integer(lobby_id)
     {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
     PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
@@ -18,7 +21,9 @@ defmodule LvWeb.TicTacToe do
        server: lobby_info.game_server,
        state: "started",
        lobby_id: lobby_id,
-       multiplayer: true
+       multiplayer: true,
+       turn_count: 0,
+       turn_timer: @turn_time
      )}
   end
 
@@ -33,7 +38,9 @@ defmodule LvWeb.TicTacToe do
        server: lobby_info.game_server,
        state: "waiting",
        lobby_id: lobby_id,
-       multiplayer: true
+       multiplayer: true,
+       turn_count: 0,
+       turn_timer: @turn_time
      )}
   end
 
@@ -67,7 +74,10 @@ defmodule LvWeb.TicTacToe do
             <.board game={@game} interact={false} />
             <.negative_button phx-click="resign">Resign</.negative_button>
           <% ["your-move", true] -> %>
-            <h2>Your Move!</h2>
+            <div class="flex flex-col mx-auto justify-evenly attentionGreen rounded-md">
+              <h2>Your Move!</h2>
+              <h2> Seconds left: <%= @turn_timer %> </h2> 
+            </div>
             <.board game={@game} interact={true} />
             <.negative_button phx-click="resign">Resign</.negative_button>
           <% ["opp-resigned", true] -> %>
@@ -189,7 +199,7 @@ defmodule LvWeb.TicTacToe do
     game = GameServer.player_move_multi(conn.assigns.server, {coords, marker}, self())
     IO.inspect(game.winner, label: "winner value")
     IO.inspect(marker, label: "marker value")
-    {:noreply, assign(conn, state: "opponent-move", game: game)}
+    {:noreply, assign(conn, state: "opponent-move", game: game, turn_count: conn.assigns.turn_count + 1, turn_timer: @turn_time)}
   end
 
   def handle_event("mark", %{"row" => row, "col" => col}, socket) do
@@ -241,6 +251,7 @@ defmodule LvWeb.TicTacToe do
   end
 
   def handle_cast({:take_turn, game_state}, socket) do
+    Process.send_after(self(), {:turn_tick, socket.assigns.turn_count}, 1000)
     {:noreply, assign(socket, game: game_state, state: "your-move")}
   end
 
@@ -251,4 +262,31 @@ defmodule LvWeb.TicTacToe do
   def handle_call({:set_marker, marker}, _caller, socket) do
     {:reply, :ok, assign(socket, marker: marker)}
   end
+
+  def handle_info(
+        {:turn_tick, turn_count},
+        %{assigns: %{turn_count: turn_count, turn_timer: turn_timer}} = socket
+      )
+      when turn_timer > 0 do
+    Process.send_after(self(), {:turn_tick, turn_count}, 1000)
+    {:noreply, assign(socket, turn_timer: turn_timer - 1)}
+  end
+
+  def handle_info(
+        {:turn_tick, turn_count},
+        %{assigns: %{turn_count: turn_count, game: game, server: server, marker: color}} = conn
+      ) do
+    play = Lv.Game.random_move(game)
+    game = GameServer.player_move_multi(server, {play, color}, self())
+
+    {:noreply,
+     assign(conn,
+       state: "opponent-move",
+       game: game,
+       turn_timer: @turn_time,
+       turn_count: turn_count + 1
+     )}
+  end
+
+  def handle_info({:turn_tick, _}, socket), do: {:noreply, socket}
 end
