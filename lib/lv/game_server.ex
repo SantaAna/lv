@@ -155,7 +155,7 @@ defmodule Lv.GameServer do
     state.player.change_state(state.next_player_pid, "game-over")
     state.player.set_game(state.next_player_pid, state.game)
 
-    Lv.Matches.record_match_result(
+    {:ok, match} = Lv.Matches.record_match_result(
       state.player_info.id,
       state.next_player_info.id,
       Lv.Game.name(state.game),
@@ -167,6 +167,7 @@ defmodule Lv.GameServer do
       "match_results",
       {:match_result,
        %{
+         id: match.id,       
          draw: Lv.Game.draw?(state.game),
          game: Lv.Game.name(state.game),
          winner_id: state.player_info.id,
