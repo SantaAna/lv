@@ -55,7 +55,7 @@ defmodule Lv.Matches do
     |> Repo.insert()
   end
 
-  @spec record_match_result(integer, integer, String.t(), boolean) :: atom
+  @spec record_match_result(integer, integer, String.t(), boolean) :: {:ok, Ecto.Schema.t} | {:error, Ecto.Changeset.t}
   def record_match_result(winner_id, loser_id, game_name, draw?) do
     create_match(%{
       winner: winner_id,
@@ -75,6 +75,7 @@ defmodule Lv.Matches do
         order_by: [desc: m.inserted_at],
         limit: ^match_count,
         select: %{
+          id: m.id,
           winner_id: m.winner,
           winner_name: w.username,
           loser_id: m.loser,
