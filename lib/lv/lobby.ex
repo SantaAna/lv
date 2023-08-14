@@ -6,8 +6,8 @@ defmodule Lv.Lobby do
   @type status :: :in_progress | :completed | :waiting_for_opponent
 
   @type t :: %__MODULE__{
-          player1_pid: pid,
-          player2_pid: pid,
+          # player1_pid: pid,
+          # player2_pid: pid,
           game_server: pid,
           status: status, 
           id: integer | nil,
@@ -19,8 +19,8 @@ defmodule Lv.Lobby do
     {:ok, server} = GameServer.start([module: module, player: player, module_arg: []])
     %__MODULE__{
       id: id,
-      player1_pid: nil,
-      player2_pid: nil,
+      # player1_pid: nil,
+      # player2_pid: nil,
       game_server: server,
       status: :waiting_for_opponent,
       game: Lv.Game.name(GameServer.get_game(server))
