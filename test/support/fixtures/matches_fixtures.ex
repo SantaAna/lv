@@ -4,6 +4,8 @@ defmodule Lv.MatchesFixtures do
   entities via the `Lv.Matches` context.
   """
 
+  @game_names ["connectfour", "tictactoe"]
+
   @doc """
   Generate a match.
   """
@@ -11,7 +13,7 @@ defmodule Lv.MatchesFixtures do
     {:ok, match} =
       attrs
       |> Enum.into(%{
-        game: "some game"
+        game: Enum.random(@game_names)
       })
       |> Lv.Matches.create_match()
 

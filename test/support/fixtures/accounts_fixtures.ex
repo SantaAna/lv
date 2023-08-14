@@ -4,9 +4,9 @@ defmodule Lv.AccountsFixtures do
   entities via the `Lv.Accounts` context.
   """
 
-  def unique_user_email, do: "user#{System.unique_integer()}@example.com"
+  def unique_user_email, do: "#{Faker.Person.first_name()}#{System.unique_integer()}@example.com"
   def valid_user_password, do: "hello world!"
-  def valid_username, do: "dirkathan"
+  def valid_username, do: "#{Faker.Person.first_name()}-#{System.unique_integer([:positive])}"
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
