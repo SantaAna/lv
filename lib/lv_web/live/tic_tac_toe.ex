@@ -185,9 +185,7 @@ defmodule LvWeb.TicTacToe do
           O
         </div>
     <% end %>
-    """
-  end
-
+    """ end
   def handle_event("play-again", _params, socket) do
     Lv.GameServer.release(socket.assigns.server)
     {:ok, new_server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_arg: [])
@@ -201,8 +199,6 @@ defmodule LvWeb.TicTacToe do
       ) do
     coords = [row, col] |> Enum.map(&String.to_integer/1)
     game = GameServer.player_move_multi(conn.assigns.server, {coords, marker}, self())
-    IO.inspect(game.winner, label: "winner value")
-    IO.inspect(marker, label: "marker value")
     {:noreply, assign(conn, state: "opponent-move", game: game, turn_count: conn.assigns.turn_count + 1, turn_timer: @turn_time)}
   end
 

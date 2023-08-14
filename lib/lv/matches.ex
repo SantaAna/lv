@@ -55,7 +55,7 @@ defmodule Lv.Matches do
     |> Repo.insert()
   end
 
-  @spec record_match_result(integer, integer, String.t(), boolean) :: atom
+  @spec record_match_result(integer, integer, String.t(), boolean) :: {:ok, Ecto.Schema.t} | {:error, Ecto.Changeset.t}
   def record_match_result(winner_id, loser_id, game_name, draw?) do
     create_match(%{
       winner: winner_id,
@@ -63,6 +63,28 @@ defmodule Lv.Matches do
       game: game_name,
       draw: draw?
     })
+  end
+
+  def recent_matches(match_count) do
+    q =
+      from m in Match,
+        join: w in "users",
+        on: w.id == m.winner,
+        join: l in "users",
+        on: l.id == m.loser,
+        order_by: [desc: m.inserted_at],
+        limit: ^match_count,
+        select: %{
+          id: m.id,
+          winner_id: m.winner,
+          winner_name: w.username,
+          loser_id: m.loser,
+          loser_name: l.username,
+          game: m.game,
+          draw: m.draw
+        }
+
+    Repo.all(q)
   end
 
   def matches_played_by_user(user_id) do
