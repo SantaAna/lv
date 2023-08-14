@@ -7,9 +7,16 @@ defmodule Lv.MatchesTest do
     alias Lv.Matches.Match
 
     import Lv.MatchesFixtures
+    import Lv.AccountsFixtures
 
     @invalid_attrs %{game: nil}
 
+    test "record_match_result will record valid match" do
+      winner = user_fixture(%{username: "winner"}) 
+      loser = user_fixture(%{username: "loser"}) 
+      {:ok, m} = Matches.record_match_result(winner.id, loser.id, "tictactoe", false)
+      assert Matches.list_matches() == [m]
+    end
     test "list_matches/0 returns all matches" do
       match = match_fixture()
       assert Matches.list_matches() == [match]
