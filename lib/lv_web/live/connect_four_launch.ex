@@ -22,6 +22,9 @@ defmodule LvWeb.ConnectFourLaunch do
     <p> 
       You can join an existing lobby from the list below, play against the comptuer, or create your own lobby!
     </p>
+    <.link navigate={~p"/match-activity"}>
+    <.link_button phx> Check the Match Feed </.link_button>
+    </.link>
     <div class="flex flex-col mt-3 mb-5">
       <h1 class="text-2xl mb-3 text-center"> Play Connect Four </h1>
       <div class="flex flex-row justify-evenly">
