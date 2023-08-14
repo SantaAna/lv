@@ -23,10 +23,9 @@ defmodule LvWeb.Router do
     # live "/", HomeLive
     # live "/guess", WrongLive
     # live "/rps", RockPaperScissors
-    live "/ttt", TicTacToe
     # live "/wordle", Wordle
-    live "/connectfour", ConnectFour
     live "/match-activity", MatchActivity
+    live "/", ConnectFourLaunch
   end
 
   # Other scopes may use custom stacks.
@@ -74,7 +73,8 @@ defmodule LvWeb.Router do
       on_mount: [{LvWeb.UserAuth, :ensure_authenticated}] do
       live "/users/settings", UserSettingsLive, :edit
       live "/users/settings/confirm_email/:token", UserSettingsLive, :confirm_email
-      live "/", ConnectFourLaunch
+      live "/ttt", TicTacToe
+      live "/connectfour", ConnectFour
       live "/history", UserGameHistory 
     end
   end
