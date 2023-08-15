@@ -1,7 +1,6 @@
 defmodule Lv.MatchCache do
   use GenServer
   alias Lv.Matches
-  alias Lv.Accounts
   alias Phoenix.PubSub
 
   # client
@@ -13,11 +12,20 @@ defmodule Lv.MatchCache do
     GenServer.call(__MODULE__, :get_matches)
   end
 
+  def clear() do
+    GenServer.call(__MODULE__, :clear)
+  end
+
   # server 
   @impl true
   def init(_) do
     PubSub.subscribe(Lv.PubSub, "match_results")
     {:ok, Matches.recent_matches(10)}
+  end
+
+  @impl true
+  def handle_call(:clear, _from, _state) do
+    {:reply, :ok, []} 
   end
 
   @impl true

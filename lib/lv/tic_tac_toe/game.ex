@@ -62,7 +62,7 @@ defmodule Lv.TicTacToe.Game do
   end
 
   def computer_move(%__MODULE__{winner: nil, draw: false} = game) do
-    computer_move = ComputerMoveServer.get_move(game) 
+    computer_move = Lv.ComputerMoveServer.get_move(game) 
     mark(game, computer_move, :o)
   end
 

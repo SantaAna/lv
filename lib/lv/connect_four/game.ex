@@ -76,8 +76,8 @@ defmodule Lv.ConnectFour.Game do
   def computer_turn(%__MODULE__{board: board, computer_difficulty: comp_difficulty} = game) do
     computer_move =
       case comp_difficulty do
-        :random -> ComputerPlayer.move(board, :random)
-        :perfect -> ComputerPlayer.move(game, :perfect)
+        :random -> Lv.ComputerPlayer.move(board, :random)
+        :perfect -> Lv.ComputerMoveServer.get_move(game, look_ahead: 6)
       end
 
     {:ok, board} = Board.mark(board, computer_move, :black)

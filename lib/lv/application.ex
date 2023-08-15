@@ -20,7 +20,7 @@ defmodule Lv.Application do
       LvWeb.Endpoint,
       # Start a worker by calling: Lv.Worker.start_link(arg)
       # {Lv.Worker, arg}
-      {Lv.TicTacToe.ComputerMoveServer, []},
+      {Lv.ComputerMoveServer, []},
       {Lv.LobbyServer, []},
       {Lv.MatchCache, []}
     ]
