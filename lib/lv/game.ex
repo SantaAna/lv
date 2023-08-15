@@ -8,6 +8,8 @@ defprotocol Lv.Game do
   def markers(game)
   def name(game)
   def random_move(game)
+  def possible_moves(game)
+  def winning_player(game)
 end
 
 defimpl Lv.Game, for: Lv.ConnectFour.Game do
@@ -41,6 +43,9 @@ defimpl Lv.Game, for: Lv.ConnectFour.Game do
 
   def name(_game), do: "connectfour"
   def random_move(game), do: Lv.ConnectFour.Game.open_cols(game) |> Enum.random()
+  def possible_moves(game), do: Lv.ConnectFour.Game.open_cols(game)
+  def winning_player(%Lv.ConnectFour.Game{winner: nil}), do: nil
+  def winning_player(%Lv.ConnectFour.Game{winner: winner}), do: winner
 end
 
 defimpl Lv.Game, for: Lv.TicTacToe.Game do
@@ -74,4 +79,10 @@ defimpl Lv.Game, for: Lv.TicTacToe.Game do
 
   def name(_game), do: "tictactoe"
   def random_move(game), do: Lv.TicTacToe.Game.free_spaces(game) |> Enum.random() |> elem(0)
+  def possible_moves(game) do
+    Lv.TicTacToe.Game.free_spaces(game)
+    |> Enum.map(& elem(&1, 0))
+  end
+  def winning_player(%Lv.TicTacToe.Game{winner: nil}), do: nil
+  def winning_player(%Lv.TicTacToe.Game{winner: winner}), do: winner
 end

@@ -10,13 +10,12 @@ defmodule Lv.ConnectFour.ComputerPlayer do
   end
 
   @spec random_move(map) :: integer
-  def random_move(board) do
-    Board.open_cols(board)
-    |> Enum.random()
+  def random_move(game) do
+    Lv.Game.random_move(game)
   end
 
   @spec perfect_move(map) :: integer
-  def perfect_move(board), do: minimax(board)
+  def perfect_move(game), do: minimax(game)
 
   @spec minimax(Game.t) :: integer
   def minimax(game) do
