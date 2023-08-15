@@ -36,29 +36,31 @@ defmodule Lv.TicTacToe.ComputerPlayer do
   """
   @spec minimax(map, :o | :x) :: {list(integer), integer}
   def minimax(game, turn \\ :o) do
-    possible_moves = Game.free_spaces(game) |> Enum.unzip() |> elem(0)
+    possible_moves = Lv.Game.possible_moves(game) 
+
+    [human_marker, computer_marker] = Lv.Game.markers(game)
 
     game =
       game
-      |> Game.winner()
-      |> Game.draw_check()
+      |> Lv.Game.win_check()
+      |> Lv.Game.draw_check()
 
-    case [turn, game] do
+    case [turn, Lv.Game.draw?(game), Lv.Game.winning_player(game)] do
       # these clauses return tuples so they are compatible with elem call.
-      [_, %Game{draw: true}] ->
+      [_, true, _] ->
         {nil, 0}
 
-      [_, %Game{winner: :o}] ->
+      [_, _, :o] ->
         {nil, 1}
 
-      [_, %Game{winner: :x}] ->
+      [_, _, :x] ->
         {nil, -1}
 
       # consider our moves
-      [:o, _] ->
+      [:o, _, _] ->
         # create every possible board state.
         Enum.map(possible_moves, fn move ->
-          game = Game.mark(game, move, :o)
+          game = Lv.Game.mark(game, move, :o)
           {move, game}
         end)
         # rate every board state according to its value recursively.
@@ -67,9 +69,9 @@ defmodule Lv.TicTacToe.ComputerPlayer do
         |> Enum.max_by(fn {_move, score} -> score end)
 
       # opponent considers their moves
-      [:x, _] ->
+      [:x, _, _] ->
         Enum.map(possible_moves, fn move ->
-          game = Game.mark(game, move, :x)
+          game = Lv.Game.mark(game, move, :x)
           {move, game}
         end)
         |> Enum.map(fn {move, game} -> {move, elem(minimax(game, :o), 1)} end)
