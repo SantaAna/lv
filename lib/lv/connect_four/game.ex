@@ -77,7 +77,7 @@ defmodule Lv.ConnectFour.Game do
     computer_move =
       case comp_difficulty do
         :random -> Lv.ComputerPlayer.move(board, :random)
-        :perfect -> Lv.ComputerPlayer.move(game, :perfect, look_ahead: 6)
+        :perfect -> Lv.ComputerMoveServer.get_move(game, look_ahead: 6)
       end
 
     {:ok, board} = Board.mark(board, computer_move, :black)
