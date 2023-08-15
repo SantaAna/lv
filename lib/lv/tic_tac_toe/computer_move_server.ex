@@ -1,6 +1,5 @@
 defmodule Lv.TicTacToe.ComputerMoveServer do
   use GenServer
-  alias Lv.TicTacToe.ComputerPlayer
 
   # public
   def start_link(_) do
@@ -22,7 +21,7 @@ defmodule Lv.TicTacToe.ComputerMoveServer do
     if cache_result = Map.get(cache, board) do
       {:reply, cache_result, cache}
     else
-      computer_move = ComputerPlayer.move(board, :perfect)
+      computer_move = Lv.ComputerPlayer.move(board, :perfect)
       {:reply, computer_move, Map.put(cache, board, computer_move)}
     end
   end
