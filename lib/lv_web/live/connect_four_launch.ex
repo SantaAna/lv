@@ -32,7 +32,7 @@ defmodule LvWeb.ConnectFourLaunch do
     <.link navigate={~p"/match-activity"}>
     <.link_button> Check the Match Feed </.link_button>
     </.link>
-    <div class="grid grid-cols-2 gap-4 justify-items-center">
+    <div class="grid grid-cols-2 gap-4">
         <.link navigate={~p"/connectfour"}> 
         <.link_button>Play Connect Four Against Computer</.link_button>
         </.link>
