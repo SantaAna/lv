@@ -8,12 +8,22 @@ defmodule LvWeb.ConnectFourLaunch do
     "tictactoe" => [Lv.TicTacToe.Game, LvWeb.TicTacToe, "ttt"]
   }
 
-  def mount(_params, _session, socket) do
+  def mount(_params, session, socket) do
     PubSub.subscribe(Lv.PubSub, "lobbies")
-    lobbies = LobbyServer.list_games() 
-              |> Enum.filter(&(&1.status == :waiting_for_opponent))
-              |> Enum.sort_by(& &1.id)
-    {:ok, assign(socket, lobbies: lobbies)}
+
+    socket =
+      socket
+      |> assign_new(:current_user, fn ->
+        if user_token = session["user_token"],
+          do: Lv.Accounts.get_user_by_session_token(user_token)
+      end)
+      |> assign_new(:lobbies, fn ->
+        LobbyServer.list_games()
+        |> Enum.filter(&(&1.status == :waiting_for_opponent))
+        |> Enum.sort_by(& &1.id)
+      end)
+
+    {:ok, socket}
   end
 
   def render(assigns) do
@@ -66,24 +76,32 @@ defmodule LvWeb.ConnectFourLaunch do
   def handle_info({:new, %{id: lobby_id}}, socket) do
     {:ok, lobby} = LobbyServer.get_game(lobby_id)
     lobbies = [lobby | socket.assigns.lobbies]
-    {:noreply, assign(socket, lobbies: lobbies)} 
+    {:noreply, assign(socket, lobbies: lobbies)}
   end
 
   def handle_info({:delete, {:id, lobby_id}}, socket) do
-    {:noreply, assign(socket, lobbies: Enum.reject(socket.assigns.lobbies, & &1.id == lobby_id))} 
+    {:noreply, assign(socket, lobbies: Enum.reject(socket.assigns.lobbies, &(&1.id == lobby_id)))}
+  end
+
+  
+  def handle_event("join", _, %{assigns: %{current_user: nil}} = socket) do
+    {:noreply, push_navigate(socket, to: ~p"/users/log_in")}
   end
 
   def handle_event("join", %{"id" => id, "game" => game}, socket) do
-    [_, _ , path] = @alias_to_game_module[game]
+    [_, _, path] = @alias_to_game_module[game]
     {:noreply, push_navigate(socket, to: ~p"/#{path}?#{[lobby_id: id, state: "joined"]}")}
   end
 
-  def handle_event("create-lobby", %{"game" => game_name}, socket) do
-      [server_mod, player_mod, path] = @alias_to_game_module[game_name]
-     id = LobbyServer.get_id()
-     PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: server_mod, player: player_mod}})
-
-     {:noreply, push_navigate(socket, to: ~p"/#{path}?#{[lobby_id: id, state: "waiting"]}")}
+  def handle_event("create-lobby", _, %{assigns: %{current_user: nil}} = socket) do  
+    {:noreply, push_navigate(socket, to: ~p"/users/log_in")}
   end
 
+  def handle_event("create-lobby", %{"game" => game_name}, socket) do
+    [server_mod, player_mod, path] = @alias_to_game_module[game_name]
+    id = LobbyServer.get_id()
+    PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: server_mod, player: player_mod}})
+
+    {:noreply, push_navigate(socket, to: ~p"/#{path}?#{[lobby_id: id, state: "waiting"]}")}
+  end
 end
