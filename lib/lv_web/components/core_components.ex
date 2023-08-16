@@ -90,12 +90,13 @@ defmodule LvWeb.CoreComponents do
   end
 
   slot :inner_block, required: true
+  attr :class, :string, default: nil
   attr :rest, :global
 
   def link_button(assigns) do
     ~H"""
     <button
-      class="rounded-md m-3 px-3 py-3 text-gray-50 bg-black font-bold cursor-pointer tracking-wider hover:bg-gray-700 transition-all"
+      class={["rounded-md m-3 px-3 py-3 text-gray-50 bg-black font-bold cursor-pointer tracking-wider hover:bg-gray-700 transition-all", @class]}
       {@rest}
     >
       <%= render_slot(@inner_block) %>
