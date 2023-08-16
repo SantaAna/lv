@@ -39,7 +39,7 @@ defmodule LvWeb.ConnectFourLaunch do
         The computer will always be planning a few moves ahead so make sure to think twice before you move.
       </p>
     </div>
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 gap-4 mt-3">
       <.link navigate={~p"/connectfour"}>
         <.link_button>Play Connect Four Against Computer</.link_button>
       </.link>
@@ -62,28 +62,45 @@ defmodule LvWeb.ConnectFourLaunch do
 
   def lobby(assigns) do
     ~H"""
-    <div class="flex flex-row gap-2 items-center">
-      <div class="text-lg">
-        <%= @lobby.game %>
-      </div>
+    <div class="flex flex-row gap-2 items-center shadow-lg p-4 rounded-md bg-slate-50 w-2/3 mx-auto">
       <.link_button phx-click="join" phx-value-id={@lobby.id} phx-value-game={@lobby.game}>
         Join
       </.link_button>
+      <div class="flex flex-col text-lg w-36">
+        <div class="flex flex-row justify-between">
+          <p>
+            Game:
+          </p>
+          <p>
+            <%= @lobby.game %>
+          </p>
+        </div>
+        <div class="flex flex-row justify-between">
+          <p>
+            Host:
+          </p>
+          <p>
+            <%= @lobby.host %>
+          </p>
+        </div>
+      </div>
     </div>
     """
   end
 
-  def handle_info({:new, %{id: lobby_id}}, socket) do
-    {:ok, lobby} = LobbyServer.get_game(lobby_id)
-    lobbies = [lobby | socket.assigns.lobbies]
-    {:noreply, assign(socket, lobbies: lobbies)}
+  def handle_info({:new, %{id: lobby_id, host: host}}, socket) do
+    lobby_id
+    |> LobbyServer.get_game()
+    |> then(fn {:ok, lobby} -> Map.put(lobby, :host, host) end)
+    |> then(&[&1 | socket.assigns.lobbies])
+    |> then(&assign(socket, lobbies: &1))
+    |> then(&{:noreply, &1})
   end
 
   def handle_info({:delete, {:id, lobby_id}}, socket) do
     {:noreply, assign(socket, lobbies: Enum.reject(socket.assigns.lobbies, &(&1.id == lobby_id)))}
   end
 
-  
   def handle_event("join", _, %{assigns: %{current_user: nil}} = socket) do
     {:noreply, push_navigate(socket, to: ~p"/users/log_in")}
   end
@@ -93,14 +110,20 @@ defmodule LvWeb.ConnectFourLaunch do
     {:noreply, push_navigate(socket, to: ~p"/#{path}?#{[lobby_id: id, state: "joined"]}")}
   end
 
-  def handle_event("create-lobby", _, %{assigns: %{current_user: nil}} = socket) do  
+  def handle_event("create-lobby", _, %{assigns: %{current_user: nil}} = socket) do
     {:noreply, push_navigate(socket, to: ~p"/users/log_in")}
   end
 
   def handle_event("create-lobby", %{"game" => game_name}, socket) do
     [server_mod, player_mod, path] = @alias_to_game_module[game_name]
     id = LobbyServer.get_id()
-    PubSub.broadcast(Lv.PubSub, "lobbies", {:new, %{id: id, mod: server_mod, player: player_mod}})
+
+    PubSub.broadcast(
+      Lv.PubSub,
+      "lobbies",
+      {:new,
+       %{id: id, mod: server_mod, player: player_mod, host: socket.assigns.current_user.username}}
+    )
 
     {:noreply, push_navigate(socket, to: ~p"/#{path}?#{[lobby_id: id, state: "waiting"]}")}
   end
