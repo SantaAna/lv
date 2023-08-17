@@ -49,20 +49,6 @@ defmodule LvWeb.ConnectFour do
     |> then(& {:ok, &1})
   end
 
-  defp get_lobby_info(socket, lobby_id) do
-    case LobbyServer.get_game(lobby_id) do
-      {:ok, lobby_info} ->
-        {:ok,
-         assign(socket,
-           server: lobby_info.game_server,
-           game: GameServer.get_game(lobby_info.game_server),
-           lobby_id: lobby_id
-         )}
-
-      {:error, _} ->
-        {:error, push_navigate(socket, to: ~p"/")}
-    end
-  end
 
   def mount(_params, _session, conn) do
     {:ok, server} = GameServer.start(module: Lv.ConnectFour.Game, module_arg: [])
@@ -200,4 +186,19 @@ defmodule LvWeb.ConnectFour do
   defp exec_if_ok({:ok, val}, fun), do: {:ok, fun.(val)}
   defp exec_if_ok({:error, val}, _fun), do: {:error, val}
   defp unwrap!({_, val}), do: val
+
+  defp get_lobby_info(socket, lobby_id) do
+    case LobbyServer.get_game(lobby_id) do
+      {:ok, lobby_info} ->
+        {:ok,
+         assign(socket,
+           server: lobby_info.game_server,
+           game: GameServer.get_game(lobby_info.game_server),
+           lobby_id: lobby_id
+         )}
+
+      {:error, _} ->
+        {:error, push_navigate(socket, to: ~p"/")}
+    end
+  end
 end
