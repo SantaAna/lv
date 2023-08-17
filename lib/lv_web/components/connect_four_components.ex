@@ -73,13 +73,13 @@ defmodule LvWeb.ConnectFourComponents do
     ~H"""
     <%= cond do %>
       <% @game.draw  -> %>
-        <h2 class="text-yellow-300">Draw!</h2>
+        <h2 class="text-yellow-300 text-lg font-semibold">Draw!</h2>
       <% @game.winner == @color -> %>
-        <h2 class="text-emerald-500">You Win!</h2>
+        <h2 class="text-emerald-500 text-lg font-semibold">You Win!</h2>
       <% @game.winner == nil -> %>
         <h2></h2>
       <% true -> %>
-        <h2 class="text-red-600">You Lose!</h2>
+        <h2 class="text-red-600 text-lg font-semibold">You Lose!</h2>
     <% end %>
     """
   end
@@ -89,7 +89,7 @@ defmodule LvWeb.ConnectFourComponents do
   def multiplayer_opp_resigned(assigns) do
     ~H"""
     <.center_all>
-      <h2 class="text-emerald-500">You Win!</h2>
+      <h2 class="text-emerald-500 text-lg font-semibold">You Win!</h2>
       <h3>Your opponent resigned</h3>
       <.center_board>
         <%= render_slot(@inner_block) %>
@@ -109,7 +109,7 @@ defmodule LvWeb.ConnectFourComponents do
     ~H"""
     <.center_all>
       <div class="flex w-1/2 mx-auto justify-evenly attentionGreen rounded-md">
-        <h2>Make Your Move</h2>
+        <h2 class="font-semibold">Make Your Move</h2>
         <h2> Seconds Left: <%= @turn_timer %> </h2> 
       </div>
       <.center_board>
@@ -125,7 +125,7 @@ defmodule LvWeb.ConnectFourComponents do
   def multiplayer_opp_turn(assigns) do
     ~H"""
     <.center_all>
-      <h2>Waiting for opponent to make move</h2>
+      <h2 class="font-semibold">Waiting for opponent to make move</h2>
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
@@ -136,8 +136,8 @@ defmodule LvWeb.ConnectFourComponents do
 
   def multiplayer_wait(assigns) do
     ~H"""
-    <div class="mx-auto text-center">
-      <h2 class="mb-4">Waiting for opponent to join</h2>
+    <div class="flex flex-col justify-items-center mx-auto text-center w-1/2">
+      <h2 class="mb-4 text-lg font-bold">Waiting for opponent to join</h2>
       <.negative_button phx-click="kill-lobby">
         Leave Lobby
       </.negative_button>
@@ -164,7 +164,7 @@ defmodule LvWeb.ConnectFourComponents do
   def multiplayer_start(assigns) do
     ~H"""
     <.center_all>
-      <h2>Game is Starting</h2>
+      <h2 class="font-semibold">Game is Starting</h2>
       <.center_board>
         <%= render_slot(@inner_block) %>
       </.center_board>
