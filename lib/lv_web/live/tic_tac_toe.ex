@@ -8,44 +8,44 @@ defmodule LvWeb.TicTacToe do
   @turn_time 10
 
   def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, socket) do
-    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
-    lobby_id = String.to_integer(lobby_id)
-    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
+    socket
+    |> get_lobby_info(String.to_integer(lobby_id))
+    |> exec_if_ok(
+      &assign(&1, :user, Lv.Accounts.get_user_by_session_token(session["user_token"]))
+    )
+    |> exec_if_ok(fn socket ->
+      if connected?(socket) do
+        PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
+        GameServer.player_join(socket.assigns.server, self(), socket.assigns.user)
+        GameServer.start_game(socket.assigns.server)
+      end
 
-    if connected?(socket) do
-      PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
-      GameServer.player_join(lobby_info.game_server, self(), user)
-      GameServer.start_game(lobby_info.game_server)
-    end
-
-    {:ok,
-     assign(socket,
-       game: GameServer.get_game(lobby_info.game_server),
-       server: lobby_info.game_server,
-       state: "started",
-       lobby_id: lobby_id,
-       multiplayer: true,
-       turn_count: 0,
-       turn_timer: @turn_time
-     )}
+      socket
+    end)
+    |> exec_if_ok(
+      &assign(&1, state: "started", multiplayer: true, turn_count: 0, turn_timer: @turn_time)
+    )
+    |> unwrap!()
+    |> then(&{:ok, &1})
   end
 
   def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, session, socket) do
-    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
-    lobby_id = String.to_integer(lobby_id)
-    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
-    if connected?(socket), do: GameServer.player_join(lobby_info.game_server, self(), user)
+    socket
+    |> get_lobby_info(String.to_integer(lobby_id))
+    |> exec_if_ok(
+      &assign(&1, :user, Lv.Accounts.get_user_by_session_token(session["user_token"]))
+    )
+    |> exec_if_ok(fn socket ->
+      if connected?(socket),
+        do: GameServer.player_join(socket.assigns.server, self(), socket.assigns.user)
 
-    {:ok,
-     assign(socket,
-       game: GameServer.get_game(lobby_info.game_server),
-       server: lobby_info.game_server,
-       state: "waiting",
-       lobby_id: lobby_id,
-       multiplayer: true,
-       turn_count: 0,
-       turn_timer: @turn_time
-     )}
+      socket
+    end)
+    |> exec_if_ok(
+      &assign(&1, state: "waiting", multiplayer: true, turn_count: 0, turn_timer: @turn_time)
+    )
+    |> unwrap!()
+    |> then(&{:ok, &1})
   end
 
   def mount(_params, _session, socket) do
@@ -69,8 +69,8 @@ defmodule LvWeb.TicTacToe do
         <%= case [@state, @multiplayer] do %>
           <% ["waiting", true] -> %>
             <div class="mx-auto text-center">
-            <h2 class="text-lg font-semibold">Waiting for an opponenet to Join</h2>
-            <.negative_button phx-click="kill-lobby">Leave Lobby</.negative_button>
+              <h2 class="text-lg font-semibold">Waiting for an opponenet to Join</h2>
+              <.negative_button phx-click="kill-lobby">Leave Lobby</.negative_button>
             </div>
           <% ["started", true] -> %>
             <div class="mx-auto text-center">
@@ -87,7 +87,7 @@ defmodule LvWeb.TicTacToe do
             <div class="mx-auto text-center">
               <div class="mx-auto text-center">
                 <h2>Your Move!</h2>
-                <h2> Seconds left: <%= @turn_timer %> </h2> 
+                <h2>Seconds left: <%= @turn_timer %></h2>
               </div>
               <.board game={@game} interact={true} />
               <.negative_button phx-click="resign">Resign</.negative_button>
@@ -199,7 +199,9 @@ defmodule LvWeb.TicTacToe do
           O
         </div>
     <% end %>
-    """ end
+    """
+  end
+
   def handle_event("play-again", _params, socket) do
     Lv.GameServer.release(socket.assigns.server)
     {:ok, new_server} = Lv.GameServer.start(module: Lv.TicTacToe.Game, module_arg: [])
@@ -213,7 +215,14 @@ defmodule LvWeb.TicTacToe do
       ) do
     coords = [row, col] |> Enum.map(&String.to_integer/1)
     game = GameServer.player_move_multi(conn.assigns.server, {coords, marker}, self())
-    {:noreply, assign(conn, state: "opponent-move", game: game, turn_count: conn.assigns.turn_count + 1, turn_timer: @turn_time)}
+
+    {:noreply,
+     assign(conn,
+       state: "opponent-move",
+       game: game,
+       turn_count: conn.assigns.turn_count + 1,
+       turn_timer: @turn_time
+     )}
   end
 
   def handle_event("mark", %{"row" => row, "col" => col}, socket) do
@@ -276,7 +285,8 @@ defmodule LvWeb.TicTacToe do
     {:reply, :ok, assign(socket, marker: marker)}
   end
 
-  def handle_info({:turn_tick, _turn_count}, %{assigns: %{state: "opp-resigned"}} = socket), do: {:noreply, socket}
+  def handle_info({:turn_tick, _turn_count}, %{assigns: %{state: "opp-resigned"}} = socket),
+    do: {:noreply, socket}
 
   def handle_info(
         {:turn_tick, turn_count},
@@ -304,4 +314,23 @@ defmodule LvWeb.TicTacToe do
   end
 
   def handle_info({:turn_tick, _}, socket), do: {:noreply, socket}
+
+  defp get_lobby_info(socket, lobby_id) do
+    case LobbyServer.get_game(lobby_id) do
+      {:ok, lobby_info} ->
+        {:ok,
+         assign(socket,
+           server: lobby_info.game_server,
+           game: GameServer.get_game(lobby_info.game_server),
+           lobby_id: lobby_id
+         )}
+
+      {:error, _} ->
+        {:error, push_navigate(socket, to: ~p"/")}
+    end
+  end
+
+  defp exec_if_ok({:ok, val}, fun), do: {:ok, fun.(val)}
+  defp exec_if_ok({:error, val}, _fun), do: {:error, val}
+  defp unwrap!({_, val}), do: val
 end
