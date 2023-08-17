@@ -7,47 +7,61 @@ defmodule LvWeb.ConnectFour do
   alias Phoenix.PubSub
 
   @turn_time 60
-  #TODO: refactor to use marker instead of color
-  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, conn) do
-    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
-    lobby_id = String.to_integer(lobby_id)
-    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
+  # TODO: refactor to use marker instead of color
+  def mount(%{"lobby_id" => lobby_id, "state" => "joined"}, session, socket) do
+    socket
+    |> get_lobby_info(String.to_integer(lobby_id))
+    |> exec_if_ok(
+      &assign(&1, :user, Lv.Accounts.get_user_by_session_token(session["user_token"]))
+    )
+    |> exec_if_ok(fn socket ->
+      if connected?(socket) do
+        PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, socket.assigns.lobby_id}})
+        GameServer.player_join(socket.assigns.server, self(), socket.assigns.user)
+        GameServer.start_game(socket.assigns.server)
+      end
 
-    if connected?(conn) do
-      PubSub.broadcast(Lv.PubSub, "lobbies", {:delete, {:id, lobby_id}})
-      GameServer.player_join(lobby_info.game_server, self(), user)
-      GameServer.start_game(lobby_info.game_server)
-    end
-
-    {:ok,
-     assign(conn,
-       game: GameServer.get_game(lobby_info.game_server),
-       server: lobby_info.game_server,
-       state: "started",
-       lobby_id: lobby_id,
-       multiplayer: true,
-       turn_count: 0,
-       turn_timer: @turn_time
-     )}
+      socket
+    end)
+    |> exec_if_ok(
+      &assign(&1, state: "started", multiplayer: true, turn_count: 0, turn_timer: @turn_time)
+    )
+    |> unwrap!()
+    |> then(&{:ok, &1})
   end
 
-  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, session, conn) do
-    user = Lv.Accounts.get_user_by_session_token(session["user_token"])
-    lobby_id = String.to_integer(lobby_id)
-    {:ok, lobby_info} = LobbyServer.get_game(lobby_id)
+  def mount(%{"lobby_id" => lobby_id, "state" => "waiting"}, session, socket) do
+    socket
+    |> get_lobby_info(String.to_integer(lobby_id))
+    |> exec_if_ok(
+      &assign(&1, :user, Lv.Accounts.get_user_by_session_token(session["user_token"]))
+    )
+    |> exec_if_ok(fn socket ->
+      if connected?(socket),
+        do: GameServer.player_join(socket.assigns.server, self(), socket.assigns.user)
 
-    if connected?(conn), do: GameServer.player_join(lobby_info.game_server, self(), user)
+      socket
+    end)
+    |> exec_if_ok(
+      &assign(&1, state: "waiting", multiplayer: true, turn_count: 0, turn_timer: @turn_time)
+    )
+    |> unwrap!() 
+    |> then(& {:ok, &1})
+  end
 
-    {:ok,
-     assign(conn,
-       game: GameServer.get_game(lobby_info.game_server),
-       server: lobby_info.game_server,
-       state: "waiting",
-       lobby_id: lobby_id,
-       multiplayer: true,
-       turn_count: 0,
-       turn_timer: @turn_time
-     )}
+  defp get_lobby_info(socket, lobby_id) do
+    case LobbyServer.get_game(lobby_id) do
+      {:ok, lobby_info} ->
+        {:ok,
+         assign(socket,
+           server: lobby_info.game_server,
+           game: GameServer.get_game(lobby_info.game_server),
+           lobby_id: lobby_id
+         )}
+
+      {:error, _} ->
+        {:error, push_navigate(socket, to: ~p"/")}
+    end
   end
 
   def mount(_params, _session, conn) do
@@ -113,7 +127,7 @@ defmodule LvWeb.ConnectFour do
   def handle_event("resign", _parmas, socket) do
     socket
     |> push_navigate(to: ~p"/")
-    |> then(& {:noreply, &1})
+    |> then(&{:noreply, &1})
   end
 
   # gen server functions
@@ -153,7 +167,8 @@ defmodule LvWeb.ConnectFour do
     {:reply, :ok, assign(socket, color: color)}
   end
 
-  def handle_info({:turn_tick, _turn_count}, %{assigns: %{state: "opp-resigned"}} = socket), do: {:noreply, socket}
+  def handle_info({:turn_tick, _turn_count}, %{assigns: %{state: "opp-resigned"}} = socket),
+    do: {:noreply, socket}
 
   def handle_info(
         {:turn_tick, turn_count},
@@ -181,4 +196,8 @@ defmodule LvWeb.ConnectFour do
   end
 
   def handle_info({:turn_tick, _}, socket), do: {:noreply, socket}
+
+  defp exec_if_ok({:ok, val}, fun), do: {:ok, fun.(val)}
+  defp exec_if_ok({:error, val}, _fun), do: {:error, val}
+  defp unwrap!({_, val}), do: val
 end
