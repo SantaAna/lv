@@ -6,7 +6,11 @@ defmodule LvWeb.MatchActivity do
   def mount(_params, _session, socket) do
     matches = MatchCache.get_matches()
     PubSub.subscribe(Lv.PubSub, "match_results")
-    {:ok, stream(socket, :matches, matches, at: 0, limit: 10)}
+
+    socket
+    |> assign(:update, false)
+    |> stream(:matches, matches, at: 0, limit: 10)
+    |> then(&{:ok, &1})
   end
 
   def render(assigns) do
@@ -29,39 +33,39 @@ defmodule LvWeb.MatchActivity do
         <tr
           :for={{dom_id, match} <- @streams.matches}
           id={dom_id}
-          phx-mounted={JS.add_class("attentionGreen")}
+          phx-mounted={if @update, do: JS.add_class("attentionGreen")}
         >
           <td class="relative p-0">
-              <div class="block py-4 pr-6">
-                <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
-                <span class="relative">
-                  <%= match.winner_name %>
-                </span>
-              </div>
+            <div class="block py-4 pr-6">
+              <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
+              <span class="relative">
+                <%= match.winner_name %>
+              </span>
+            </div>
           </td>
           <td class="relative p-0">
-              <div class="block py-4 pr-6">
-                <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
-                <span class="relative">
-                  <%= match.loser_name %>
-                </span>
-              </div>
+            <div class="block py-4 pr-6">
+              <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
+              <span class="relative">
+                <%= match.loser_name %>
+              </span>
+            </div>
           </td>
           <td class="relative p-0">
-              <div class="block py-4 pr-6">
-                <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
-                <span class="relative">
-                  <%= match.game %>
-                </span>
-              </div>
+            <div class="block py-4 pr-6">
+              <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
+              <span class="relative">
+                <%= match.game %>
+              </span>
+            </div>
           </td>
           <td class="relative p-0">
-              <div class="block py-4 pr-6">
-                <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
-                <span class="relative">
+            <div class="block py-4 pr-6">
+              <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
+              <span class="relative">
                 <%= if match.draw, do: "Draw", else: "#{match.winner_name} won" %>
-                </span>
-              </div>
+              </span>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -70,6 +74,9 @@ defmodule LvWeb.MatchActivity do
   end
 
   def handle_info({:match_result, match}, socket) do
-    {:noreply, stream_insert(socket, :matches, match, at: 0, limit: 10)}
+    socket
+    |> assign(:update, true)
+    |> stream_insert(:matches, match, at: 0, limit: 10)
+    |> then(&{:noreply, &1})
   end
 end
