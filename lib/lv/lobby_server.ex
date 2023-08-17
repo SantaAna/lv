@@ -40,8 +40,8 @@ defmodule Lv.LobbyServer do
   end
   
   @impl true
-  def handle_info({:new, %{id: id, mod: module, player: player}}, {games, current_id}) do
-    tracker = Lobby.new(id, module, player) 
+  def handle_info({:new, %{id: id, mod: module, player: player, host: host}}, {games, current_id}) do
+    tracker = Lobby.new(id, module, player, host) 
     {:noreply, {[tracker | games], current_id}}
   end
 
