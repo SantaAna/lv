@@ -68,71 +68,85 @@ defmodule LvWeb.TicTacToe do
         <h1 class="text-center text-2xl mb-5">Tic-Tac-Toe</h1>
         <%= case [@state, @multiplayer] do %>
           <% ["waiting", true] -> %>
-            <h2>Waiting for an opponenet to Join</h2>
+            <div class="mx-auto text-center">
+            <h2 class="text-lg font-semibold">Waiting for an opponenet to Join</h2>
             <.negative_button phx-click="kill-lobby">Leave Lobby</.negative_button>
-          <% ["started", true] -> %>
-            <h2>Game is Starting</h2>
-            <.board game={@game} interact={false} />
-          <% ["opponent-move", true] -> %>
-            <h2>Waiting for opponent to move</h2>
-            <.board game={@game} interact={false} />
-            <.negative_button phx-click="resign">Resign</.negative_button>
-          <% ["your-move", true] -> %>
-            <div class="flex flex-col mx-auto justify-evenly attentionGreen rounded-md">
-              <h2>Your Move!</h2>
-              <h2> Seconds left: <%= @turn_timer %> </h2> 
             </div>
-            <.board game={@game} interact={true} />
-            <.negative_button phx-click="resign">Resign</.negative_button>
+          <% ["started", true] -> %>
+            <div class="mx-auto text-center">
+              <h2 class="text-lg font-semibold">Game is Starting</h2>
+              <.board game={@game} interact={false} />
+            </div>
+          <% ["opponent-move", true] -> %>
+            <div class="mx-auto text-center">
+              <h2>Waiting for opponent to move</h2>
+              <.board game={@game} interact={false} />
+              <.negative_button phx-click="resign">Resign</.negative_button>
+            </div>
+          <% ["your-move", true] -> %>
+            <div class="mx-auto text-center">
+              <div class="mx-auto text-center">
+                <h2>Your Move!</h2>
+                <h2> Seconds left: <%= @turn_timer %> </h2> 
+              </div>
+              <.board game={@game} interact={true} />
+              <.negative_button phx-click="resign">Resign</.negative_button>
+            </div>
           <% ["opp-resigned", true] -> %>
-            <h2 class="text-green-500 text-2xl text-center mb-2">
-              You Win!
-            </h2>
-            <h3>Your Opponent Resigned</h3>
-            <.board game={@game} interact={false} />
-            <.link navigate={~p"/"}>
-              <.link_button>
-                Return to Lobby
-              </.link_button>
-            </.link>
+            <div class="mx-auto text-center">
+              <h2 class="text-green-500 text-2xl text-center mb-2">
+                You Win!
+              </h2>
+              <h3>Your Opponent Resigned</h3>
+              <.board game={@game} interact={false} />
+              <.link navigate={~p"/"}>
+                <.link_button>
+                  Return to Lobby
+                </.link_button>
+              </.link>
+            </div>
           <% ["game-over", true] -> %>
-            <%= cond do %>
-              <% @game.draw -> %>
-                <h2 class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
-              <% @game.winner == @marker  -> %>
-                <h2 class="text-green-500 text-2xl text-center mb-2">
-                  You Win!
-                </h2>
-              <% true -> %>
-                <h2 class="text-red-500 text-2xl text-center mb-2">
-                  You Lose!
-                </h2>
-            <% end %>
-            <.board game={@game} interact={false} />
-            <.link navigate={~p"/"}>
-              <.link_button>
-                Return to Lobby
-              </.link_button>
-            </.link>
+            <div class="mx-auto text-center">
+              <%= cond do %>
+                <% @game.draw -> %>
+                  <h2 class="text-yellow-500 text-2xl text-center mb-2">Cat's Game!</h2>
+                <% @game.winner == @marker  -> %>
+                  <h2 class="text-green-500 text-2xl text-center mb-2">
+                    You Win!
+                  </h2>
+                <% true -> %>
+                  <h2 class="text-red-500 text-2xl text-center mb-2">
+                    You Lose!
+                  </h2>
+              <% end %>
+              <.board game={@game} interact={false} />
+              <.link navigate={~p"/"}>
+                <.link_button>
+                  Return to Lobby
+                </.link_button>
+              </.link>
+            </div>
           <% [_, false] -> %>
-            <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">
-              Cat's Game!
-            </h2>
-            <h2 :if={@game.winner == :x} class="text-green-500 text-2xl text-center mb-2">
-              You Win!
-            </h2>
-            <h2 :if={@game.winner == :o} class="text-red-500 text-2xl text-center mb-2">
-              You Lose!
-            </h2>
-            <.board game={@game} interact={!@game.winner && !@game.draw} />
-            <div class="flex justify-center">
-              <button
-                :if={@game.draw || @game.winner}
-                class="bg-black text-zinc-50 p-4 mt-5 hover:bg-gray-700"
-                phx-click="play-again"
-              >
-                Play Again
-              </button>
+            <div class="mx-auto text-center">
+              <h2 :if={@game.draw} class="text-yellow-500 text-2xl text-center mb-2">
+                Cat's Game!
+              </h2>
+              <h2 :if={@game.winner == :x} class="text-green-500 text-2xl text-center mb-2">
+                You Win!
+              </h2>
+              <h2 :if={@game.winner == :o} class="text-red-500 text-2xl text-center mb-2">
+                You Lose!
+              </h2>
+              <.board game={@game} interact={!@game.winner && !@game.draw} />
+              <div class="flex justify-center">
+                <button
+                  :if={@game.draw || @game.winner}
+                  class="bg-black text-zinc-50 p-4 mt-5 hover:bg-gray-700"
+                  phx-click="play-again"
+                >
+                  Play Again
+                </button>
+              </div>
             </div>
         <% end %>
       </div>
