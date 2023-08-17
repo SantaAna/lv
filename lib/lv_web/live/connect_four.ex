@@ -111,8 +111,9 @@ defmodule LvWeb.ConnectFour do
   end
 
   def handle_event("resign", _parmas, socket) do
-    GameServer.resign_game(socket.assigns.server, self())
-    {:noreply, push_navigate(socket, to: ~p"/")}
+    socket
+    |> push_navigate(to: ~p"/")
+    |> then(& {:noreply, &1})
   end
 
   # gen server functions
@@ -151,6 +152,8 @@ defmodule LvWeb.ConnectFour do
   def handle_call({:set_color, color}, _caller, socket) do
     {:reply, :ok, assign(socket, color: color)}
   end
+
+  def handle_info({:turn_tick, _turn_count}, %{assigns: %{state: "opp-resigned"}} = socket), do: {:noreply, socket}
 
   def handle_info(
         {:turn_tick, turn_count},
