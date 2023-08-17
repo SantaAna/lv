@@ -82,23 +82,39 @@ defmodule Lv.GameServer do
     {:noreply, state}
   end
 
-  @impl true
-  def handle_cast(
-        {:resign, resigning_player_pid},
-        %{player1_pid: resigning_player_pid, player2_pid: other_player_pid, player: player} =
-          state
-      ) do
-    player.change_state(other_player_pid, "opp-resigned")
-    Process.send_after(self(), :shutdown, 1000)
-    {:noreply, state}
-  end
+  def handle_cast({:resign, _resigning_player_pid} = message, state) do
+    state =
+      state
+      |> whose_turn(message)
+      |> then(fn state ->
+        state.player.change_state(state.next_player_pid, "opp-resigned")
 
-  def handle_cast(
-        {:resign, resigning_player_pid},
-        %{player1_pid: other_player_pid, player2_pid: resigning_player_pid, player: player} =
-          state
-      ) do
-    player.change_state(other_player_pid, "opp-resigned")
+        {:ok, match} =
+          Lv.Matches.record_match_result(
+            state.next_player_info.id,
+            state.player_info.id,
+            Lv.Game.name(state.game),
+            Lv.Game.draw?(state.game)
+          )
+
+        PubSub.broadcast(
+          Lv.PubSub,
+          "match_results",
+          {:match_result,
+           %{
+             id: match.id,
+             draw: Lv.Game.draw?(state.game),
+             game: Lv.Game.name(state.game),
+             winner_id: state.next_player_info.id,
+             loser_id: state.player_info.id,
+             winner_name: Accounts.get_user!(state.next_player_info.id).username,
+             loser_name: Accounts.get_user!(state.player_info.id).username
+           }}
+        )
+
+        state
+      end)
+
     Process.send_after(self(), :shutdown, 1000)
     {:noreply, state}
   end
@@ -155,19 +171,20 @@ defmodule Lv.GameServer do
     state.player.change_state(state.next_player_pid, "game-over")
     state.player.set_game(state.next_player_pid, state.game)
 
-    {:ok, match} = Lv.Matches.record_match_result(
-      state.player_info.id,
-      state.next_player_info.id,
-      Lv.Game.name(state.game),
-      Lv.Game.draw?(state.game)
-    )
+    {:ok, match} =
+      Lv.Matches.record_match_result(
+        state.player_info.id,
+        state.next_player_info.id,
+        Lv.Game.name(state.game),
+        Lv.Game.draw?(state.game)
+      )
 
     PubSub.broadcast(
       Lv.PubSub,
       "match_results",
       {:match_result,
        %{
-         id: match.id,       
+         id: match.id,
          draw: Lv.Game.draw?(state.game),
          game: Lv.Game.name(state.game),
          winner_id: state.player_info.id,
@@ -191,6 +208,8 @@ defmodule Lv.GameServer do
   end
 
   @spec whose_turn(map, tuple) :: map
+  defp whose_turn(state, {_, player_pid}), do: whose_turn(state, {nil, nil, player_pid})
+
   defp whose_turn(state, {_, _, player_pid}) do
     if state.player1_pid == player_pid do
       state
