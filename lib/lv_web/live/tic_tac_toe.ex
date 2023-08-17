@@ -214,7 +214,6 @@ defmodule LvWeb.TicTacToe do
   end
 
   def handle_event("resign", _parmas, socket) do
-    GameServer.resign_game(socket.assigns.server, self())
     {:noreply, push_navigate(socket, to: ~p"/")}
   end
 
@@ -262,6 +261,8 @@ defmodule LvWeb.TicTacToe do
   def handle_call({:set_marker, marker}, _caller, socket) do
     {:reply, :ok, assign(socket, marker: marker)}
   end
+
+  def handle_info({:turn_tick, _turn_count}, %{assigns: %{state: "opp-resigned"}} = socket), do: {:noreply, socket}
 
   def handle_info(
         {:turn_tick, turn_count},
