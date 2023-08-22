@@ -4,14 +4,14 @@ defmodule Lv.Repo.Migrations.CreateMatches do
   def change do
     create table(:matches) do
       add :game, :string
-      add :winner, references(:users, on_delete: :nothing)
-      add :loser, references(:users, on_delete: :nothing)
-      add :draw, :boolean
+      add :first_player, references(:users, on_delete: :nothing)
+      add :second_player, references(:users, on_delete: :nothing)
+      add :winner_id, references(:users, on_delete: :nothing)
 
       timestamps()
     end
 
-    create index(:matches, [:winner])
-    create index(:matches, [:loser])
+    create index(:matches, [:first_player])
+    create index(:matches, [:second_player])
   end
 end

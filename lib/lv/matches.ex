@@ -56,32 +56,32 @@ defmodule Lv.Matches do
   end
 
   @spec record_match_result(integer, integer, String.t(), boolean) :: {:ok, Ecto.Schema.t} | {:error, Ecto.Changeset.t}
-  def record_match_result(winner_id, loser_id, game_name, draw?) do
+  def record_match_result(player1, player2, game_name, winner) do
     create_match(%{
-      winner: winner_id,
-      loser: loser_id,
+      first_player: player1,
+      second_player: player2,
       game: game_name,
-      draw: draw?
+      winner_id: winner
     })
   end
 
   def recent_matches(match_count) do
     q =
       from m in Match,
-        join: w in "users",
-        on: w.id == m.winner,
-        join: l in "users",
-        on: l.id == m.loser,
+        join: p1 in "users",
+        on: p1.id == m.first_player,
+        join: p2 in "users",
+        on: p2.id == m.second_player,
         order_by: [desc: m.inserted_at],
         limit: ^match_count,
         select: %{
           id: m.id,
-          winner_id: m.winner,
-          winner_name: w.username,
-          loser_id: m.loser,
-          loser_name: l.username,
+          first_player_id: p1.id,
+          first_player_name: p1.username,
+          second_player_id: p2.id,
+          second_player_name: p2.username,
           game: m.game,
-          draw: m.draw
+          winner_id: m.winner_id
         }
 
     Repo.all(q)
@@ -90,19 +90,19 @@ defmodule Lv.Matches do
   def matches_played_by_user(user_id) do
     q =
       from m in Match,
-        join: w in "users",
-        on: w.id == m.winner,
-        join: l in "users",
-        on: l.id == m.loser,
-        where: m.winner == ^user_id or m.loser == ^user_id,
+        join: p1 in "users",
+        on: p1.id == m.first_player,
+        join: p2 in "users",
+        on: p2.id == m.second_player,
+        where: m.first_player == ^user_id or m.second_player == ^user_id,
         order_by: [desc: m.inserted_at],
         select: %{
-          winner_id: m.winner,
-          winner_name: w.username,
-          loser_id: m.loser,
-          loser_name: l.username,
+          first_player_id: p1.id,
+          first_player_name: p1.username,
+          second_player_id: p2.id,
+          second_player_name: p2.username,
           game: m.game,
-          draw: m.draw
+          winner_id: m.winner_id
         }
 
     Repo.all(q)

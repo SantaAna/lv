@@ -6,6 +6,7 @@ defmodule LvWeb.MatchActivity do
   def mount(_params, _session, socket) do
     matches = MatchCache.get_matches()
     PubSub.subscribe(Lv.PubSub, "match_results")
+    IO.inspect(matches)
 
     socket
     |> assign(:update, false)
@@ -39,7 +40,7 @@ defmodule LvWeb.MatchActivity do
             <div class="block py-4 pr-6">
               <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
               <span class="relative">
-                <%= match.winner_name %>
+                <%= match.first_player_name %>
               </span>
             </div>
           </td>
@@ -47,7 +48,7 @@ defmodule LvWeb.MatchActivity do
             <div class="block py-4 pr-6">
               <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
               <span class="relative">
-                <%= match.loser_name %>
+                <%= match.second_player_name %>
               </span>
             </div>
           </td>
@@ -63,7 +64,11 @@ defmodule LvWeb.MatchActivity do
             <div class="block py-4 pr-6">
               <span class="absolute -inset-y-px right-0 -left-4 group-hover:bg-zinc-50 sm:rounded-l-xl" />
               <span class="relative">
-                <%= if match.draw, do: "Draw", else: "#{match.winner_name} won" %>
+                <%= case [match.winner_id, match.second_player_id, match.first_player_id] do
+                  [nil, _, _] -> "Draw"
+                  [w, w, _] -> "#{match.second_player_name} won"
+                  [w, _, w] -> "#{match.first_player_name} won"
+                end %>
               </span>
             </div>
           </td>

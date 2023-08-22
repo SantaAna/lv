@@ -6,30 +6,80 @@ defmodule LvWeb.UserGameHistory do
 
     if connected?(socket) do
       # TODO: factor this out to context so it can be tested seperately
+      user_id = user.id
+
       matches =
-        Lv.Matches.matches_played_by_user(user.id)
-        |> Enum.map(fn match ->
-          if match.winner_id == user.id do
-            Map.put(match, :opponent_name, match.loser_name)
-            |> Map.put(:pot_result, "won")
-          else
-            Map.put(match, :opponent_name, match.winner_name)
-            |> Map.put(:pot_result, "lost")
-          end
-        end)
-        |> Enum.map(fn match ->
-          if match.draw do
-            Map.put(match, :result, "draw")
-          else
-            match
-          end
-        end)
-        |> Enum.map(fn match ->
-          if match.draw do
-            match
-          else
-            Map.put(match, :result, match.pot_result)
-          end
+        Lv.Matches.matches_played_by_user(user_id)
+        |> Enum.map(fn
+          %{
+            winner_id: nil,
+            first_player_id: ^user_id,
+            second_player_name: opponent_name,
+            game: game
+          } ->
+            %{
+              game: game,
+              opponent_name: opponent_name,
+              result: "draw"
+            }
+
+          %{
+            winner_id: nil,
+            second_player_id: ^user_id,
+            first_player_name: opponent_name,
+            game: game
+          } ->
+            %{
+              game: game,
+              opponent_name: opponent_name,
+              result: "draw"
+            }
+
+          %{
+            winner_id: ^user_id,
+            second_player_id: ^user_id,
+            first_player_name: opponent_name,
+            game: game
+          } ->
+            %{
+              game: game,
+              opponent_name: opponent_name,
+              result: "win"
+            }
+
+          %{
+            winner_id: ^user_id,
+            first_player_id: ^user_id,
+            second_player_name: opponent_name,
+            game: game
+          } ->
+            %{
+              game: game,
+              opponent_name: opponent_name,
+              result: "win"
+            }
+
+          %{
+            first_player_id: ^user_id,
+            second_player_name: opponent_name,
+            game: game
+          } ->
+            %{
+              game: game,
+              opponent_name: opponent_name,
+              result: "loss"
+            }
+
+          %{
+            second_player_id: ^user_id,
+            first_player_name: opponent_name,
+            game: game
+          } ->
+            %{
+              game: game,
+              opponent_name: opponent_name,
+              result: "loss"
+            }
         end)
 
       {:ok, assign(socket, matches: matches, loading: false)}

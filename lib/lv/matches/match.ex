@@ -4,9 +4,9 @@ defmodule Lv.Matches.Match do
 
   schema "matches" do
     field :game, :string
-    field :winner, :id
-    field :loser, :id
-    field :draw, :boolean
+    field :first_player, :id
+    field :second_player, :id
+    field :winner_id, :id
 
     timestamps()
   end
@@ -14,7 +14,7 @@ defmodule Lv.Matches.Match do
   @doc false
   def changeset(match, attrs) do
     match
-    |> cast(attrs, [:game, :winner, :loser, :draw])
+    |> cast(attrs, [:game, :first_player, :second_player, :winner_id])
     |> validate_required([:game])
   end
 end

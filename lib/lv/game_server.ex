@@ -94,7 +94,7 @@ defmodule Lv.GameServer do
             state.next_player_info.id,
             state.player_info.id,
             Lv.Game.name(state.game),
-            Lv.Game.draw?(state.game)
+            state.next_player_info.id 
           )
 
         PubSub.broadcast(
@@ -105,8 +105,9 @@ defmodule Lv.GameServer do
              id: match.id,
              draw: Lv.Game.draw?(state.game),
              game: Lv.Game.name(state.game),
-             winner_id: state.next_player_info.id,
-             loser_id: state.player_info.id,
+             first_player_id: state.next_player_info.id,
+             second_player_id: state.player_info.id,
+             winner_id: state.next_player_info.id, 
              winner_name: Accounts.get_user!(state.next_player_info.id).username,
              loser_name: Accounts.get_user!(state.player_info.id).username
            }}
@@ -170,13 +171,13 @@ defmodule Lv.GameServer do
     state.player.change_state(state.player_pid, "game-over")
     state.player.change_state(state.next_player_pid, "game-over")
     state.player.set_game(state.next_player_pid, state.game)
-
+    winner_id = if Lv.Game.draw?(state.game), do: nil, else: state.player_info.id
     {:ok, match} =
       Lv.Matches.record_match_result(
         state.player_info.id,
         state.next_player_info.id,
         Lv.Game.name(state.game),
-        Lv.Game.draw?(state.game)
+        winner_id
       )
 
     PubSub.broadcast(
@@ -185,12 +186,12 @@ defmodule Lv.GameServer do
       {:match_result,
        %{
          id: match.id,
-         draw: Lv.Game.draw?(state.game),
          game: Lv.Game.name(state.game),
-         winner_id: state.player_info.id,
-         loser_id: state.next_player_info.id,
-         winner_name: Accounts.get_user!(state.player_info.id).username,
-         loser_name: Accounts.get_user!(state.next_player_info.id).username
+         winner_id: winner_id,
+         first_player_id: state.player_info.id,
+         second_player_id: state.next_player_info.id,
+         first_player_name: Accounts.get_user!(state.player_info.id).username,
+         second_player_name: Accounts.get_user!(state.next_player_info.id).username
        }}
     )
 

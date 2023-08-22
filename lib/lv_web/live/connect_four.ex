@@ -45,10 +45,9 @@ defmodule LvWeb.ConnectFour do
     |> exec_if_ok(
       &assign(&1, state: "waiting", multiplayer: true, turn_count: 0, turn_timer: @turn_time)
     )
-    |> unwrap!() 
-    |> then(& {:ok, &1})
+    |> unwrap!()
+    |> then(&{:ok, &1})
   end
-
 
   def mount(_params, _session, conn) do
     {:ok, server} = GameServer.start(module: Lv.ConnectFour.Game, module_arg: [])
